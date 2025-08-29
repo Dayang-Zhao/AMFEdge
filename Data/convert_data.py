@@ -83,3 +83,16 @@ def ds2df(ds:xr.Dataset, reset_index=True)->pd.DataFrame:
         df = df.reset_index()
 
     return df
+
+# ------------------------------------------------
+def tifs2ds(fpaths):
+    """Convert multiple tifs without date (e.g., t2m) in band names into xr.dataset."""
+    
+    ds_list = []
+    for fpath in fpaths:
+        ds = tif2ds(fpath)
+        ds_list.append(ds)
+    
+    out_ds = xr.merge(ds_list)
+
+    return out_ds

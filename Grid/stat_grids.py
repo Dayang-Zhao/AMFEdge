@@ -3,6 +3,7 @@ sys.path.append(r'D:\ProgramData\VistualStudioCode\AMFEdge')
 import pandas as pd
 import osgeo
 import xarray as xr
+import rioxarray as rxr
 import geopandas as gpd
 
 import matplotlib.pyplot as plt
@@ -62,9 +63,14 @@ def stat_grids(ds:xr.Dataset, shp:gpd.GeoDataFrame, ids:list, crs:str='EPSG:4326
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\Meteo\Amazon_2023_anoMeteo.nc"
-    ds = xr.open_dataset(path)
-    shp_path = r"F:\Research\AMFEdge\Shapefile\Amazon_Grid_Final.shp"
+    year = 2023
+    path = r"F:\Research\AMFEdge\AGB\scale_mean.tif"
+    # ds = xr.open_dataset(path)
+    ds = rxr.open_rasterio(path, masked=True)
+    ds = ds.sel(band=1).drop('band').to_dataset(name='agb_scale').rename({'x': 'lon', 'y': 'lat'})
+    ds = ds.rio.set_spatial_dims(x_dim='lon', y_dim='lat')\
+        .rio.write_crs("EPSG:4326")
+    shp_path = r"F:\Research\AMFEdge\Shapefile\Amazon_Grid_Final_15deg.shp"
     shp = gpd.read_file(shp_path).rename(columns={'id': 'Id'})
     ids = shp['Id'].unique()
     # ids = [470, 445, 446, 428]
@@ -72,5 +78,5 @@ if __name__ == '__main__':
     outdf = stat_grids(ds, shp, ids)
 
     # Save the output dataframe to a CSV file.
-    outpath = r"F:\Research\AMFEdge\Meteo\Amazon_Grids_anoMeteo_stat.csv"
+    outpath = rf"F:\Research\AMFEdge\AGB\Amazon_Grids_stable_agb_scale_stat.csv"
     sd.save_pd_as_csv(outdf, outpath, index=False, add_row_or_col='col')

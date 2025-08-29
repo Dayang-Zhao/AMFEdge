@@ -40,7 +40,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
         for j in range(ncols):
             ax = axes[j]
             df = dfs[i*ncols+j]
-            xcol, ycol, ccol = cols[i*ncols+j]
+            xcol, ycol, ccol, scol = cols[i*ncols+j]
 
             # Linear regression.
             result = linregress(df[xcol], df[ycol])
@@ -57,7 +57,9 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
             extend = plot_setting['extends'][i*ncols+j]
 
             # Plot.
-            df.plot.scatter(ax=ax, x=xcol, y=ycol, c=ccol, cmap=cmap, norm=norm, colorbar=False)
+            df.plot.scatter(ax=ax, x=xcol, y=ycol, c=ccol, s=df[scol] *10, marker='o', 
+                            edgecolor='black', cmap=cmap, alpha=0.8, norm=norm, 
+                            legend=True, colorbar=False)
             ## Plot regression line.
             x = np.linspace(xlim[0], xlim[1], 100)
             y = result.intercept + result.slope * x
@@ -67,11 +69,18 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
             ax.set_ylim(ylim)
             ax.set_xlabel(xlabel, fontsize=LABEL_SIZE)
             ax.set_ylabel(ylabel, fontsize=LABEL_SIZE)
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
 
             # Plugins.
             ax.set_title(title_num+' '+title, loc='left', fontsize=LABEL_SIZE+1)
-            ax.text(0.05, 0.90, f"$r$ = {result.rvalue:.2f}", transform=ax.transAxes, fontsize=LABEL_SIZE+2)
-            ax.text(0.05, 0.80, f"$p$ < 0.001", transform=ax.transAxes, fontsize=LABEL_SIZE+2)
+            ax.text(0.05, 0.90, f"***$r$ = {result.rvalue:.2f}", transform=ax.transAxes, fontsize=LABEL_SIZE+2)
+            # ax.text(0.05, 0.80, f"$p$ < 0.001", transform=ax.transAxes, fontsize=LABEL_SIZE+2)
+            # ax.text(0.05, 0.70, f"slope = {result.slope:.2f}", transform=ax.transAxes, fontsize=LABEL_SIZE+2)
+
+            # Remove frames and ticks
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
 
     fig.subplots_adjust(bottom=0.2, top=0.92, left=0.12, right=0.98, hspace=0, wspace=0.25)
 
@@ -88,8 +97,8 @@ if __name__ == "__main__":
                     (~np.isnan(df['nirv_scale']))&(~np.isnan(df['ndwi_scale']))]
     dfs = [dst_df]*2
     cols = [
-        ('ndwi_magnitude','nirv_magnitude',  'nirv_magnitude'),
-        ('ndwi_scale', 'nirv_scale', 'nirv_magnitude')
+        ('ndwi_magnitude','nirv_magnitude',  'nirv_magnitude', 'nirv_scale'),
+        ('ndwi_scale', 'nirv_scale', 'nirv_magnitude', 'nirv_scale')
     ]
     
     # Plot setting.
@@ -98,10 +107,10 @@ if __name__ == "__main__":
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
     cmaps = [cmap2, cmap2]
     norms = [norm2, norm2]
-    ylabels = ['$\Delta$NIRv Magnitude (%)', '$\Delta$NIRv Scale (km)']
-    xlabels = ['$\Delta$NDWI Magnitude (%)', '$\Delta$NDWI Scale (km)']
-    xlims = [(-22,8), (0, 6.5)]
-    ylims = [(-11, 7), (0, 6.5)]
+    ylabels = [r'$M_{\nabla \mathrm{NIRv}}$ (%)', r'$S_{\nabla \mathrm{NIRv}}$ (km)']
+    xlabels = [r'$M_{\nabla \mathrm{NDWI}}$ (%)', r'$S_{\nabla \mathrm{NDWI}}$ (km)']
+    xlims = [(-8, 16), (0, 6.5)]
+    ylims = [(-7, 10), (0, 6.5)]
     extend = ['both', 'max']
     titles = ['', '']
 

@@ -52,9 +52,10 @@ def cal_scale(popt):
 
 # Calculate magnitude of edge effect, which was the difference between age=0 and age=scale.
 def cal_magnitude(scale, popt):
-    x = np.array([0, scale])
-    y = func(x, *popt)
-    magnitude = y[0] - y[1]
+    # x = np.array([0, scale])
+    # y = func(x, *popt)
+    # magnitude = y[0] - y[1]
+    magnitude = popt[0]
     return magnitude
 
 def cal_edge_effect(group, x:str, y:str):
@@ -105,7 +106,8 @@ def main(dfs, edge_types):
     outrows = []
     for i, df in enumerate(dfs):
         edge_type = edge_types[i]
-        for grid in ['pgrid', 'ngrid']:
+        # for grid in ['negrid', 'swgrid']:
+        for grid in ['grid']:
             nirv_out = cal_edge_effect(df, 'age', 'fNIRv_mean_'+grid)
             evi_out = cal_edge_effect(df, 'age', 'fEVI_mean_'+grid)
             ndwi_out = cal_edge_effect(df, 'age', 'fNDWI_mean_'+grid)
@@ -118,10 +120,12 @@ def main(dfs, edge_types):
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\EdgeAge\anoVI_panAmazon_dspecUndistEdge_2023_age.xlsx"
-    edge_types = ['grass', 'crop', 'water', 'nonveg']
-    dfs = [pd.read_excel(path, sheet_name=edge_type) for edge_type in edge_types]
+    path = r"F:\Research\AMFEdge\EdgeAge\anoVI_Amazon_sumUndistEdge_2023_age.csv"
+    # edge_types = ['grass', 'crop', 'water', 'nonveg']
+    # dfs = [pd.read_excel(path, sheet_name=edge_type) for edge_type in edge_types]
+    edge_types = ['sum']
+    dfs = [pd.read_csv(path)]
 
     outdf = main(dfs, edge_types=edge_types)
-    outpath = r"F:\Research\AMFEdge\EdgeAge\anoVI_panAmazon_dspecUndistEdge_2023_age_fitting.xlsx"
+    outpath = r"F:\Research\AMFEdge\EdgeAge\anoVI_panAmazon_dspecUndistEdge_2023_age_sum_fitting.csv"
     outdf.to_csv(outpath, index=False)

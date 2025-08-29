@@ -122,11 +122,11 @@ def main(df):
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\Edge\anoVI_panAmazon_UndistEdge_2023.xlsx"
-    sheet_name = 'NEGRID'
+    path = r"F:\Research\AMFEdge\EdgeVI\VI_panAmazon_UndistEdge_2023.xlsx"
+    sheet_name = 'SWGRID'
     df = pd.read_excel(path, sheet_name=sheet_name)
     dst_df = df.loc[df['Dist']<=DIST_MAX]
 
     outdf = main(dst_df)
-    outpath = r"F:\Research\AMFEdge\Edge\panAmazon_UndistEdge_effect_2023.xlsx"
+    outpath = r"F:\Research\AMFEdge\EdgeVI\VI_panAmazon_UndistEdge_effect_2023.xlsx"
     sd.save_pd_as_excel(outdf, outpath, sheet_name=sheet_name, index=False, add_row_or_col='col')

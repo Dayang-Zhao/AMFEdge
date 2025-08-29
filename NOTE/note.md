@@ -5,9 +5,12 @@
 # QC
 1. 在一个grid里计算边缘效应即比较forest edge和intact forest时，一个重要假设是：在这个grid中的其他因素比如树种，地形等是相似的
 2. 在计算干旱造成的植被异常时遵循的数据筛选条件：
-- 云量为0
 - 在refYears里，地物类型不发生变化，避免地物类型发生变化导致的NIRv改变，因为数据的空间分辨率的要求高，可能会导致计算的anomaly误差
 - 地形slope<20°
+- Version 1: 
+cloudFilterThresh ('CLOUDY_PIXEL_PERCENTAGE') = 60
+S2Cld_CloudProbTresh ('S2_CLOUD_PROBABILITY') = 40
+CS_CloudProbTresh ('GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED) = 0.64
 
 # TMF dataset
 1. Legend
@@ -50,3 +53,10 @@ NDWI_count, NDWI_max, NDWI_mean, NDWI_median, NDWI_skew, NDWI_stdDev, NDWI_sum,
 NIRv_count, NIRv_max, NIRv_mean, NIRv_median, NIRv_skew, NIRv_stdDev, NIRv_sum,
 }
 2. 在统计的时候还是保留所有的值，不删除末端值
+
+# Analysis
+## Importance
+1. 在分析时将NIRv scale超过6km的数据去掉
+
+# CMIP6 
+1. 单位转化有问题，所以就直接回归校正，不转化单位了

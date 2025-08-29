@@ -9,6 +9,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 
 R2_THRESHOLD = 0.8
 DIST_MAX = 6000
+DST_SUFFIX = '_mean'
 
 # Exponential Function
 def func(x, a, b, c):
@@ -52,13 +53,14 @@ def cal_scale(popt):
 
 # Calculate magnitude of edge effect, which was the difference between dist=0 and dist=scale.
 def cal_magnitude(scale, popt):
-    # # Magnitude is the difference between dist=0 and dist=scale
-    # x = np.array([0, scale])
-    # y = func(x, *popt)
-    # magnitude = y[0] - y[1]
+    # # Magnitude is the difference between dist=60 and dist > 3km.
+    # x = np.concatenate((np.array([60]), np.arange(3000, DIST_MAX+1, 1)))
+    x = np.arange(0, 121)
+    y = func(x, *popt)
+    magnitude = y.mean()
 
-    # Magnitude is the difference between dist=0 and the synoptic value.
-    magnitude = popt[0]
+    # Magnitude is the difference between dist=60 and the synoptic value.
+    # magnitude = popt[0]
     return magnitude
 
 def cal_edge_effect(group, x:str, y:str):
@@ -66,6 +68,10 @@ def cal_edge_effect(group, x:str, y:str):
     # dst_group = group.loc[(group['Dist'] > 0)&(group[y[:-5]+'_skew'] <= 1)&(group[y[:-5]+'_skew'] >= -1)]
     xdata, ydata = dst_group[x].values[1:], dst_group[y].values[1:]
     # intact_value = group[group['Dist'] == -1][y].values[0]
+    intact_df = group[(group['Dist'] >= 3000)&(group['Dist'] <= DIST_MAX)]
+    intact_value = (intact_df[y] * intact_df[y.split('_')[0]+'_count']).sum()/intact_df[y.split('_')[0]+'_count'].sum()
+    # intact_value = intact_df[y].mean()
+    ydata = (ydata - intact_value)*-1
 
     # Remove NaN values
     mask = ~np.isnan(xdata) & ~np.isnan(ydata)
@@ -115,9 +121,9 @@ def main(df, ids):
     
     for id in ids:
         group = df[df['Id'] == id]
-        nirv_out = cal_edge_effect(group, 'Dist', 'NIRv_mean')
-        evi_out = cal_edge_effect(group, 'Dist', 'EVI_mean')
-        ndwi_out = cal_edge_effect(group, 'Dist', 'NDWI_mean')
+        nirv_out = cal_edge_effect(group, 'Dist', 'NIRv'+DST_SUFFIX)
+        evi_out = cal_edge_effect(group, 'Dist', 'EVI'+DST_SUFFIX)
+        ndwi_out = cal_edge_effect(group, 'Dist', 'NDWI'+DST_SUFFIX)
 
         outrow = {'ID':id} | _rename_dict(nirv_out, 'nirv')\
             | _rename_dict(evi_out, 'evi') | _rename_dict(ndwi_out, 'ndwi')

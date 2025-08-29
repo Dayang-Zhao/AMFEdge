@@ -1,6 +1,12 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import numpy as np
 import pandas as pd
 import ast
+
+import matplotlib.pyplot as plt
+plt.ion()
 
 # Convert GEE data of varying distances.
 def parse_dist_data(df:pd.DataFrame, dist_columns:list, info_columns:list=['Id', 'system:index', 'Continent', 'GEZcode', 'Tot'],
@@ -56,36 +62,39 @@ if __name__ == '__main__':
     import os
     import glob
 
-    root_dir = r"F:\Research\AMFEdge\Edge\metaData"
-    pre_fname = "anoVI_Amazon_UndistEdge_2023_"
+    year = 2023
+    root_dir = r"F:\Research\AMFEdge\AGB\EdgeAGB\metaData"
+    pre_fname = f"AGB_Amazon_Edge_{year}_"
     # pre_fname = "treeCover_Amazon_UndistEdge_2023_"
     paths = glob.glob(pre_fname+'*'+'.csv', root_dir=root_dir)
     os.chdir(root_dir)
     # info_colums = ['Id', 'system:index', 'Continent', 'GEZcode', 'Tot']
-    info_colums = ['system:index','TreeCover','bottom','left','right','top','Id']
+    info_columns = ['system:index','TreeCover','bottom','left','right','top','Id']
     raw_df_list = []
     for path in paths:
         df = pd.read_csv(path)
         raw_df_list.append(df.drop(columns=['.geo'])
-                             .set_index(info_colums)
+                             .set_index(info_columns)
                         )
     raw_df = pd.concat(raw_df_list, axis=1).reset_index()
     # raw_df = raw_df.drop(columns=['660', '780', '900'])
     
     # Parse data.
     other_columns = ['MCWD_mean','MCWD_stdDev', 'anoMCWD_mean', 'anoMCWD_stdDev']
-    dist_columns = ['Dist',
-        'EVI_count', 'EVI_max', 'EVI_mean', 'EVI_median', 'EVI_skew', 'EVI_stdDev', 'EVI_sum',
-        'NDWI_count', 'NDWI_max', 'NDWI_mean', 'NDWI_median', 'NDWI_skew', 'NDWI_stdDev', 'NDWI_sum',
-        'NIRv_count', 'NIRv_max', 'NIRv_mean', 'NIRv_median', 'NIRv_skew', 'NIRv_stdDev', 'NIRv_sum',
-        ]
-    # stats = ['count', 'max', 'mean', 'median', 'skew', 'stdDev', 'sum']
+    # dist_columns = ['Dist',
+    #     'EVI_count', 'EVI_max', 'EVI_mean', 'EVI_median', 'EVI_skew', 'EVI_stdDev', 'EVI_sum',
+    #     'NDWI_count', 'NDWI_max', 'NDWI_mean', 'NDWI_median', 'NDWI_skew', 'NDWI_stdDev', 'NDWI_sum',
+    #     'NIRv_count', 'NIRv_max', 'NIRv_mean', 'NIRv_median', 'NIRv_skew', 'NIRv_stdDev', 'NIRv_sum',
+    #     ]
+    stats = ['count', 'max', 'mean', 'median', 'skew', 'stdDev', 'sum']
     # dist_columns = ['Dist'] + ['undistForest_'+x for x in stats] + ['deforestLand_'+x for x in stats]\
     #     + ['degradedForest_'+x for x in stats] + ['regrowthForest_'+x for x in stats]
+    # dist_columns = ['Dist'] + ['rh50_'+x for x in stats] + ['rh98_'+x for x in stats]
+    dist_columns = ['Dist'] + ['agb_'+x for x in stats]
     df2 = parse_dist_data(df=raw_df, dist_columns=dist_columns, 
-                          info_columns=info_colums, other_columns=other_columns)
+                          info_columns=info_columns, other_columns=other_columns)
 
     # Export reshaped data.
-    outpath = r"F:\Research\AMFEdge\Edge\anoVI_Amazon_UndistEdge_2023.csv"
+    outpath = rf"F:\Research\AMFEdge\AGB\EdgeAGB\AGB_Amazon_Edge_{year}.csv"
     # outpath = r"F:\Research\AMFEdge\Edge_TreeCover\treeCover_Amazon_UndistEdge_2023.csv"
     df2.to_csv(outpath, index=False)

@@ -40,17 +40,18 @@ if __name__ == '__main__':
     import os
     import glob
 
-    root_dir = r"F:\Research\AMFEdge\EdgeAge\metaData"
-    edge_type = 'nonveg'
-    pre_fname = f'anoVI_Amazon_{edge_type}UndistEdge_2023_'
+    root_dir = r"F:\Research\AMFEdge\EdgeAge\sumEdge"
+    edge_type = 'sum'
+    pre_fname = f'anoVI_Amazon_{edge_type}UndistEdge_2023_y'
     paths = glob.glob(pre_fname+'*'+'.csv', root_dir=root_dir)
     os.chdir(root_dir)
     info_colums = ['system:index','TreeCover','bottom','left','right','top','Id']
     raw_df_list = []
     for path in paths:
-        age = path.split('_')[-1].split('.')[0][1:]
+        # age = path.split('_')[-1].split('.')[0][1:]
+        age = (int(path.split('_')[-1].split('.')[0][1:]) + int(path.split('_')[-2][1:]))/2
         df = pd.read_csv(path)
-        df['age'] = int(age)
+        df['age'] = age
         raw_df_list.append(df.drop(columns=['.geo'])
                              .set_index(info_colums)
                         )
@@ -63,6 +64,8 @@ if __name__ == '__main__':
     df2 = parse_age_data(df=raw_df, dst_vars=dst_vars, stat_columns=stats)
 
     # Export reshaped data.
-    outpath = r"F:\Research\AMFEdge\EdgeAge\anoVI_Amazon_specUndistEdge_2023_age.xlsx"
-    with pd.ExcelWriter(outpath, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
-        df2.to_excel(writer, sheet_name=edge_type, index=False)
+    # outpath = r"F:\Research\AMFEdge\EdgeAge\sumEdge\anoVI_Amazon_sumUndistEdge_2023_age.xlsx"
+    # with pd.ExcelWriter(outpath, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+    #     df2.to_excel(writer, sheet_name=edge_type, index=False)
+    outpath = r"F:\Research\AMFEdge\EdgeAge\sumEdge\anoVI_Amazon_sumUndistEdge_2023_age.csv"
+    df2.to_csv(outpath, index=False)

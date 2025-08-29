@@ -16,10 +16,15 @@ def batch_del_asset(parent, id_start_with):
             print(f"Deleted {asset_id}")
 
 # ******** Test ********
-# for dist in [60, 120, 180]:
-#     parent = f"projects/forestedge-432402/assets/S2/Edge{dist}"
-#     id_start_with = f"projects/forestedge-432402/assets/AmazonForestEdge2023/Edge{dist}/UndistEdge{dist}"
+import numpy as np
+
+# dists = np.arange(60, 301, 60).tolist() + np.arange(420, 901, 120).tolist() \
+#     + np.arange(1080, 1801, 180).tolist() + np.arange(2040, 3001, 240).tolist() \
+#     + np.arange(3300, 4501, 300).tolist()+ np.arange(4860, 6301, 360).tolist()
+# for dist in dists:
+#     parent = f"projects/forestedge-432402/assets/AMFUndistDegdEdge2023/Edge{dist}"
+#     id_start_with = f"projects/forestedge-432402/assets/AMFUndistDegdEdge2023/Edge{dist}/UndistDegdEdge{dist}"
 #     batch_del_asset(parent, id_start_with)
-parent = f"projects/forestedge-432402/assets/S2/AmzS2AnoVI"
-id_start_with = f"projects/forestedge-432402/assets/S2/AmzS2AnoVI/Amz_2023_"
+parent = f"projects/forestedge-432402/assets/CMIP6/SSP5_85"
+id_start_with = f"projects/forestedge-432402/assets/CMIP6/SSP5_85"
 batch_del_asset(parent, id_start_with)
