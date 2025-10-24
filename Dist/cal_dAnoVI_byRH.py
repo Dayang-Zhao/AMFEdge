@@ -39,13 +39,13 @@ def main(VI_df: pd.DataFrame, RH_df:pd.DataFrame, dst_vars:list):
 
 if __name__ == '__main__':
     # Read data.
-    VI_path = r"F:\Research\AMFEdge\Edge\anoVI_Amazon_UndistEdge_2023.csv"
+    VI_path = r"F:\Research\AMFEdge\Edge\anoVI_Amazon_Edge_2023.csv"
     VI_df = pd.read_csv(VI_path)
-    RH_path = r"F:\Research\AMFEdge\EdgeRH\Amazon_UndistEdge_Effect_2023.csv"
+    RH_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023.csv"
     RH_df = pd.read_csv(RH_path)
     dst_vars = ['NIRv', 'EVI', 'NDWI']
 
     merged_df = main(VI_df, RH_df, dst_vars)
 
-    outpath = r"F:\Research\AMFEdge\EdgeRH\dAnoVI_Amazon_UndistEdge_2023.csv"
+    outpath = r"F:\Research\AMFEdge\Edge\dAnoVI_Amazon_Edge_2023.csv"
     merged_df.to_csv(outpath, index=False)

@@ -27,6 +27,17 @@ mpl.rc('font', **font)
 def cm2inch(value):
     return value/2.54
 
+def remove_outliers_iqr(df, cols):
+    for col in cols:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower = Q1 - 1.5 * IQR
+        upper = Q3 + 1.5 * IQR
+        df = df[(df[col] >= lower) & (df[col] <= upper)]
+    return df
+
+
 def main(model, raw_df:pd.DataFrame, X:pd.DataFrame, features:list, grid:tuple, plot_setting:dict, outpath:str):
     title_nums = ['a', 'b', 'c', 'd', 'e', 'f']
     nrows, ncols = grid
@@ -68,15 +79,18 @@ def main(model, raw_df:pd.DataFrame, X:pd.DataFrame, features:list, grid:tuple, 
                 actual_ax.spines['right'].set_visible(False)
                 legend = actual_ax.legend(loc='upper left', frameon=False, fontsize=LABEL_SIZE)
             else:
-                sc = ax.scatter(
-                    raw_df[xcol],raw_df[ycol], c='#299d8f', s=40,
-                    marker='o', edgecolors='black', alpha=0.8,
+                # raw_df = remove_outliers_iqr(raw_df, [xcol, ycol])
+                ax.scatter(
+                    raw_df[xcol], raw_df[ycol], c=raw_df[ccol], s=40,
+                    marker='o', edgecolors='black', alpha=0.8, 
+                    cmap=sns.color_palette("RdBu_r", as_cmap=True),
+                    norm=mcolors.BoundaryNorm(boundaries=np.arange(-8, 9, 2), ncolors=cmap.N)
                 )
                 result = linregress(raw_df[xcol], raw_df[ycol])
                 x = np.linspace(xlim[0], xlim[1], 100)
                 y = result.intercept + result.slope * x
                 ax.plot(x, y, color='black', linewidth=1.5, linestyle='--')
-                ax.text(0.6, 0.2, '***$r$= '+str(result.rvalue.round(2)), fontsize=12, transform=ax.transAxes)
+                ax.text(0.6, 0.25, '***$r$= '+str(result.rvalue.round(2)), fontsize=12, transform=ax.transAxes)
             
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=4))
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=3))
@@ -99,16 +113,14 @@ def main(model, raw_df:pd.DataFrame, X:pd.DataFrame, features:list, grid:tuple, 
 if __name__ == "__main__":
     # Train the model.
     xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
-            'SCC_mean', 'sand_mean_mean', 'nitrogen_mean_mean',
-            'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
-            'vpd_mean', 'total_precipitation_sum_mean', 'temperature_2m_mean',
-            ]
+            'SCC_mean', 'sand_mean_mean', 'MCWD_mean', 'histMCWD_mean',
+            'surface_solar_radiation_downwards_sum_mean',
+            'vpd_mean', 'total_precipitation_sum_mean','temperature_2m_mean']
     ycol = 'nirv_scale'
 
-    path = r"F:\Research\AMFEdge\Model\Amazon_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
     raw_df = pd.read_csv(path)
     df = raw_df.dropna(subset=xcols+[ycol])
-    df['nirv_magnitude'] = df['nirv_magnitude']*-1
     df['MCWD_mean'] = df['MCWD_mean']*-1
     df['nirv_scale'] = df['nirv_scale']/1000
     df['rh98_scale'] = df['rh98_scale']/1000
@@ -127,6 +139,7 @@ if __name__ == "__main__":
 
     # Plot
     df = df[(df['rh98_scale'] <= 6)]
+    # df = df[df['nirv_magnitude']>0]
     grid = (1,2)
     features = [('rh98_scale', 'nirv_scale','nirv_magnitude', 'nirv_scale'),]*2
     cmap1 = sns.color_palette(palette='RdBu_r', as_cmap=True)
@@ -139,7 +152,7 @@ if __name__ == "__main__":
     plot_setting = {
         'titles': ['Observed', 'Modelled'],
         'xlabels': ['$S_{\mathrm{RH98}}$ (km)']*2,
-        'ylabels': [r'$S_{\nabla \mathrm{NIRv}}$ (km)']*2,
+        'ylabels': [r'$S_{\Delta \mathrm{NIRv}}$ (km)']*2,
         'xlims': [[0, 6.5], [0.5, 6]],
         'ylims': [[0, 6.5], [0.5, 6]],
         'cmaps': cmaps,'norms': norms, 'levels': [levels]*2

@@ -6,15 +6,18 @@ from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score
 from sklearn.utils.validation import check_is_fitted
+from sklearn.model_selection import GridSearchCV
 
 import matplotlib.pyplot as plt
 plt.ion()
 
 class LcoRF:
-    def __init__(self):
+    def __init__(self, n_estimators=300, max_depth=3, min_samples_split=2, 
+                 min_samples_leaf=2):
         self.model = RandomForestRegressor(
-            n_estimators=50, max_depth=5,
-            min_samples_split=2, min_samples_leaf=2, random_state=42
+            n_estimators=n_estimators, max_depth=max_depth,
+            min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
+            random_state=42
         )
         self._estimator_type = "regressor"
 
@@ -35,6 +38,19 @@ class LcoRF:
     def score(self, X, y):
         y_pred = self.predict(X)
         return r2_score(y, y_pred)
+    
+def grid_search(model, X, y, cv=5):
+    param_grid = {
+        'n_estimators': range(10, 41),     # 树的数量
+        'max_depth': range(2,6),      # 最大深度
+        'min_samples_split': range(2,6),     # 最小划分样本数
+        'min_samples_leaf': range(1,6),       # 叶子节点最小样本数
+    }
+
+    grid_search = GridSearchCV(model, param_grid, cv=cv, n_jobs=-1, scoring='r2')
+    grid_search.fit(X, y)
+  
+    return grid_search.best_params_, grid_search.best_score_
 
 if __name__ == '__main__':
     xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 

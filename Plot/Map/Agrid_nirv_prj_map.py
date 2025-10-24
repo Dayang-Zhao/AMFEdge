@@ -16,7 +16,7 @@ import seaborn as sns
 
 import GlobVars as gv
 
-LABEL_SIZE = 10
+LABEL_SIZE = 11
 font = {'family' : 'Arial',
         'weight' : 'normal',
         'size'   : LABEL_SIZE}
@@ -51,10 +51,19 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
             extend = plot_setting['extends'][i*ncols+j]
 
             # Plot.
-            df.plot(ax=ax, column=col, cmap=cmap, edgecolor='#919191', 
-                    norm=norm, linewidth=0.3, legend=True, 
-                    legend_kwds={"shrink": 0.9, 'orientation':'horizontal', 'location':'bottom', 'pad':0.05, 'extend':extend},
-                    missing_kwds={'color': 'white'})
+            if j == 1:
+                df.plot(ax=ax, column=col, cmap=cmap, edgecolor='#919191', 
+                        norm=norm, linewidth=0.3, legend=True, 
+                        legend_kwds={"shrink": 2.2, 'aspect':40, 'orientation':'horizontal', 
+                                     'location':'bottom', 'pad':0.05,'extend':extend, 'label':r' $M_{\Delta \mathrm{NIRv}}$ (%)'},
+                        missing_kwds={'color': 'white'})
+            else:
+                df.plot(ax=ax, column=col, cmap=cmap, edgecolor='#919191', 
+                        norm=norm, linewidth=0.3, legend=True, 
+                        legend_kwds={"shrink": 0, 'aspect':40, 'orientation':'horizontal', 
+                                     'location':'bottom', 'pad':0.05,'extend':extend,
+                                     'ticks':[], },
+                        missing_kwds={'color': 'white'})
 
             # Plugins.
             ax.set_title(title_num+' '+title, loc='left', fontsize=LABEL_SIZE+1)
@@ -81,11 +90,24 @@ if __name__ == "__main__":
     scenarios = ['SSP1_26', 'SSP2_45', 'SSP5_85']
     gdf = gpd.read_file(gv.GRID_PATH)
     dfs = []
+
+    def cal_diff(df, dst_var):
+        df_start = df[df['year'].isin(range(2015, 2025))].groupby('Id')[dst_var].mean().reset_index()
+        df_end = df[df['year'].isin(range(2091, 2101))].groupby('Id')[dst_var].mean().reset_index()
+        df_merged = pd.merge(df_start, df_end, on='Id', suffixes=('_start', '_end'))
+        df_merged['d'+dst_var] = df_merged[dst_var+'_end'] - df_merged[dst_var+'_start']
+
+        return df_merged
+
     for scenario in scenarios:
-        csv_path = rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_pred_{scenario}.csv"
+        csv_path = rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}.csv"
         df = pd.read_csv(csv_path)
-        # df['nirv_magnitude'] = df['nirv_magnitude']*-1
-        ave_df = df.groupby(['Id']).mean().reset_index()
+        df = df[(df['year']>=2060) & (df['year']<=2063)]
+        df = df[df['model']=='mri_esm2_0']
+        df2 = df.drop(columns=['model'])
+        df2 = df2.groupby(['Id', 'year']).mean().reset_index()
+        # ave_df = cal_diff(df2, 'nirv_magnitude')
+        ave_df = df2.groupby(['Id']).mean().reset_index()
         dfs.append(ave_df)
 
     # Merge data.
@@ -94,19 +116,15 @@ if __name__ == "__main__":
     grid = (1, 3)
 
     # Plot setting.
-    # cmap1 = sns.color_palette(palette='YlOrBr_r', as_cmap=True)
-    # levels = np.arange(-18, 1, 2)
-    # norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
-
     cmap2 = sns.color_palette("RdBu_r", as_cmap=True)
-    levels = np.arange(-4, 4.01, 0.5)
-    # levels = np.arange(-16, 17, 4)
+    # levels = np.arange(-3, 3.01, 0.5)
+    levels = np.arange(-8, 8.01, 1)
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
     cmaps = [cmap2]*3
     norms = [norm2]*3
     extend = ['both', 'both', 'both']
-    titles = [scenario + r' $M_{\nabla \mathrm{NIRv}}$ (%)' for scenario in ['RCP 2.6', 'RCP 4.5', 'RCP 8.5']]
+    titles = ['SSP1-2.6', 'SSP2-4.5', 'SSP5-8.5']
 
-    outpath = rf"E:\Thesis\AMFEdge\Figures\CMIP6\nirv_prj_map.pdf"
+    outpath = rf"E:\Thesis\AMFEdge\Figures\CMIP6\dnirv_prj_map.pdf"
     plot_setting = {'cmaps': cmaps, 'norms': norms, 'titles': titles, 'extends': extend}
     main(dfs=gdfs_merged, grid=grid, cols=cols, plot_setting=plot_setting, outpath=outpath)

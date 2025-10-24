@@ -1,3 +1,5 @@
+import sys
+sys.path.append(r"D:\ProgramData\VistualStudioCode\AMFEdge")
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -8,11 +10,26 @@ plt.ion()
 from matplotlib.ticker import MaxNLocator
 import seaborn as sns
 
+import GlobVars as gv
+
 LABEL_SIZE = 12
 font = {'family' : 'Arial',
         'weight' : 'normal',
         'size'   : LABEL_SIZE}
 mpl.rc('font', **font)
+
+def remove_outliers_iqr(df, cols):
+    for col in cols:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower = Q1 - 1.5 * IQR
+        upper = Q3 + 1.5 * IQR
+        outdf = df[(df[col] >= lower) & (df[col] <= upper)].copy()
+
+        print(f"outliers: {df[(df[col]<lower) | (df[col]>upper)]}")
+
+    return outdf
 
 def cm2inch(value):
     return value/2.54
@@ -45,8 +62,8 @@ def main(dfs:list, col:str, grid:tuple, plot_setting:dict, outpath:str):
                 sub = data[data["scenario"] == s]
                 ax.fill_between(
                     sub["year"], 
-                    sub["ci_lower"], 
-                    sub["ci_upper"], 
+                    sub[col]-sub['sem'], 
+                    sub[col]+sub['sem'], 
                     color=palette[s], alpha=0.2
                 )
 
@@ -57,7 +74,7 @@ def main(dfs:list, col:str, grid:tuple, plot_setting:dict, outpath:str):
 
             # Legend
             # ax.axvline(x=0, color='black', linestyle='--', linewidth=2)
-            ax.set_ylim(ylim)
+            # ax.set_ylim(ylim)
 
             # Remove frames and ticks
             ax.spines['top'].set_visible(False)
@@ -65,7 +82,7 @@ def main(dfs:list, col:str, grid:tuple, plot_setting:dict, outpath:str):
 
     # Adjust.
     fig.text(0.01, 0.5, ylabel, va="center", rotation="vertical")
-    fig.subplots_adjust(bottom=0.15, top=0.95, left=0.15, right=0.96, hspace=0, wspace=0.1)
+    fig.subplots_adjust(bottom=0.15, top=0.95, left=0.18, right=0.96, hspace=0, wspace=0.1)
 
     if outpath is not None:
         fig.savefig(outpath, dpi=600)
@@ -75,26 +92,50 @@ if __name__ == '__main__':
     col = 'nirv_magnitude'
     scenarios = ['SSP1_26', 'SSP2_45', 'SSP5_85']
     def cal_ave2std(df):
-        ave_df = df.groupby('year').mean().reset_index()
+        model_df = df.groupby(['year', 'model']).mean().reset_index().drop(columns='model')
+        df.drop(columns='model', inplace=True)
+        ave_df = model_df.groupby('year').mean().reset_index()
 
         # Smooth.
         ave_df[col] = ave_df[col].rolling(window=5, center=True).mean()
 
-        def ci_95(x):
-            n = len(x)
-            mean = np.mean(x)
-            sem = stats.sem(x)
-            h = sem * stats.t.ppf((1 + 0.95)/2., n-1)
-            return pd.Series([mean, mean-h, mean+h], index=["mean","ci_lower","ci_upper"])
-        std_df = df.groupby('year')[col].apply(ci_95).unstack().reset_index()
+        # # 95% CI
+        # def ci_95(x):
+        #     n = len(x)
+        #     mean = np.mean(x)
+        #     sem = stats.sem(x)
+        #     h = sem * stats.t.ppf((1 + 0.95)/2., n-1)
+        #     return pd.Series([mean, mean-h, mean+h], index=["mean","ci_lower","ci_upper"])
+        # std_df = df.groupby('year')[col].apply(ci_95).unstack().reset_index()
+
+        # std_df["ci_lower"] = std_df["ci_lower"].rolling(window=5, center=True).mean()
+        # std_df["ci_upper"] = std_df["ci_upper"].rolling(window=5, center=True).mean()
+
+        # Standard error.
+        std_df = (
+            model_df.groupby("year")[col]
+            .agg(mean="mean",
+                std="std",
+                count="count")
+            .assign(sem=lambda d: d["std"] / np.sqrt(d["count"]))
+            .reset_index()
+        )
+        std_df["sem"] = std_df["sem"].rolling(window=5, center=True).mean()
+
         outdf = pd.merge(ave_df, std_df, on='year', suffixes=('_mean', '_std'))
+
         return outdf
     
     posdfs, negdfs = [], []
     for scenario in scenarios:
-        df = pd.read_csv(rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_pred_{scenario}.csv")
+        df = pd.read_csv(rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}.csv")
+        # df = remove_outliers_iqr(df, ['nirv_magnitude'])
+        # df = df[df['model']=='miroc6']
+        # posdf = df[df['Id'].isin(gv.NEGRID_IDS)]
+        # negdf = df[df['Id'].isin(gv.SWGRID_IDS)]
         posdf = df[df['nirv_magnitude'] > 0]
         negdf = df[df['nirv_magnitude'] < 0]
+
         out_posdf = cal_ave2std(posdf) 
         out_negdf = cal_ave2std(negdf)
         out_posdf['scenario'] = scenario
@@ -107,7 +148,7 @@ if __name__ == '__main__':
 
     # Plot setting.
     grid = (2,1)
-    ylabel = r'$M_{\nabla \mathrm{NIRv}}$ (%)'
+    ylabel = r'$M_{\Delta \mathrm{NIRv}}$ (%)'
     xlabel = 'Year'
     labels = ['RCP 2.6', 'RCP 4.5', 'RCP 8.5']
     ylims = [(0.7,1.5), (-2.5,-0.9)]
@@ -115,6 +156,6 @@ if __name__ == '__main__':
     palette = dict(zip(scenarios, ['#576fa0', '#e3b87f','#b57979']))
     plot_setting = {'xlabel':xlabel, 'ylabel':ylabel, 'title':title, 
                     'palette':palette, 'labels':labels, 'ylim':ylims}
-    outpath = r"E:\Thesis\AMFEdge\Figures\CMIP6\nirv_prj_line.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\CMIP6\nirv_prj_line.jpg"
 
     main(dfs=dfs, col=col,grid=grid, plot_setting=plot_setting, outpath=outpath)

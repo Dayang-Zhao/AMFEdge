@@ -80,12 +80,12 @@ if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
     years = [2005, 2010, 2015, 2023]
-    prefname = r"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_UndistEdge_"
+    prefname = r"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_Edge_"
     dfs = [pd.read_csv(prefname + str(year) + "_diff.csv") for year in years]
 
     # Merge data.
     gdfs_merged = [gdf.merge(df, on="Id", how="left") for df in dfs]
-    cols = ['dNIRv_10_50']*4
+    cols = ['dNIRv_10_40']*4
     grid = (2, 2)
 
     # Plot setting.
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
 
     cmap2 = sns.color_palette("RdBu_r", as_cmap=True)
-    levels = np.arange(-8, 9, 2)
+    levels = np.arange(-8, 9, 1)
     # levels = np.arange(-4, 5, 1)
     # cmap2.set_over("#fc0202")
     # cmap2.set_under("#fc0202")

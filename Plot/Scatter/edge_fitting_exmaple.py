@@ -23,55 +23,94 @@ def cm2inch(value):
 def func(x, a, b, c):
     return a * np.exp(-b * x) + c
 
-popt_path = r"F:\Research\AMFEdge\Edge\Amazon_UndistEdge_Effect_2023.csv"
-popt_df = pd.read_csv(popt_path)
+def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
+    title_nums = ['a', 'b', 'c', 'd', 'e', 'f']
+    nrows, ncols = grid
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
+    fig.set_size_inches(cm2inch(15), cm2inch(12))
 
-dst_var = 'nirv'
-dst_id = 776 # Moderately fragmented example
-# dst_id = 1065 # Highly fragmented example
-popt = popt_df.loc[popt_df['Id'] == dst_id, [dst_var+'_para1', dst_var+'_para2', dst_var+'_para3']].values[0]
+    for i in range(nrows):
+        for j in range(ncols):
+            ax = axes[i,j]
+            edge_df, popt = dfs[i*ncols+j]
+            xcol, ycol = cols[i*ncols+j]
 
-edge_path = r"F:\Research\AMFEdge\Edge\anoVI_Amazon_UndistEdge_2023.csv"
-edge_df = pd.read_csv(edge_path)
-edge_df = edge_df.loc[(edge_df['Id'] == dst_id)&(edge_df['Dist'] <= 6000), :].reset_index(drop=True)
-intact_df = edge_df.loc[(edge_df['Id'] == dst_id)&((edge_df['Dist'] >= 3000))&(edge_df['Dist'] <= 6000), :]
-intact_value = (intact_df['NIRv_mean'] * intact_df['NIRv_count']).sum()/intact_df['NIRv_count'].sum()
-edge_df['NIRv_mean'] = (edge_df['NIRv_mean'] - intact_value)*-1
-edge_df['Dist'] = edge_df['Dist']/1000  # Convert to km
+            # Plot setting.
+            title_num = title_nums[i*ncols+j]
+            title = plot_setting['titles'][i*ncols+j]
+            ylabel = plot_setting['ylabels'][i*ncols+j]
+            xlim = plot_setting['xlims'][i*ncols+j]
+            ylim = plot_setting['ylims'][i*ncols+j]
 
-# Plot.
-fig, ax = plt.subplots(
-    nrows=1, ncols=1, 
-    )
-fig.set_size_inches(cm2inch(8), cm2inch(5))
-scatter1, = ax.plot(edge_df['Dist'][1:], edge_df['NIRv_mean'][1:], 'o', color='#3d98c2', markersize=3, label='$\Delta$NIRv')
-ax.plot(edge_df['Dist'], func(edge_df['Dist']*1000, *popt), '-', color='#ed3e2e', )
-ax.set_xlabel('Distance (km)', fontsize=LABEL_SIZE)
-ax.set_ylabel(r'$\nabla$NIRv$_{edge-interior}$ (%)', fontsize=LABEL_SIZE)
-fig.subplots_adjust(bottom=0.2, top=0.95, left=0.2, right=0.9, hspace=0.55, wspace=0.22)
+            # Plot.
+            y = func(edge_df[xcol]*1000, *popt[0:3]).reset_index(drop=True)
+            ax.plot(edge_df[xcol][1:], edge_df[ycol][1:], 'o', color='#275C9E', markersize=3, label='$\Delta$NIRv')
+            ax.plot(edge_df[xcol], y, '-', color='#CC4348', )
+            
+            ax.axhline(y=y[0]+popt[3], color='#275C9E', linestyle='--', linewidth=1.5)
+            ax.axvline(x=popt[4]/1000, color='#CC4348', linestyle='--', linewidth=1.5)
 
-# Draw edge and interior forests.
-ax.axvspan(0, 0.12, color= "#e5086b8f", alpha=0.3)
-ax.axvspan(3, 6, color='#e3b87f', alpha=0.3)
 
-# Add RH fitting curve for comparison.
+            ax.set_xlabel('Distance from edge (km)', fontsize=LABEL_SIZE)
+            ax.set_ylabel(ylabel, fontsize=LABEL_SIZE)
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
 
-# popt_path = r"F:\Research\AMFEdge\EdgeRH\Amazon_UndistEdge_Effect_2023.csv"
-# popt_df = pd.read_csv(popt_path)
+            # Plugins.
+            ax.set_title(title_num+' '+title, loc='left', fontsize=LABEL_SIZE+1)
 
-# dst_var = 'rh98'
-# popt = popt_df.loc[popt_df['Id'] == dst_id, [dst_var+'_para1', dst_var+'_para2', dst_var+'_para3']].values[0]
+            # Remove frames and ticks
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
 
-# edge_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_UndistEdge_2023.csv"
-# edge_df = pd.read_csv(edge_path)
-# edge_df = edge_df.loc[(edge_df['Id'] == dst_id)&(edge_df['Dist'] <= 6000), ['Dist', 'rh98_mean']].reset_index(drop=True)
-# ax2 = ax.twinx()
-# scatter2, = ax2.plot(edge_df['Dist'][1:], edge_df['rh98_mean'][1:], 'x', color='#299d8f', markersize=5, label='RH98')
-# ax2.plot(edge_df['Dist'], func(edge_df['Dist'], *popt), '-', color='#ed3e2e', )
-# ax2.set_xlabel('Distance (km)', fontsize=LABEL_SIZE)
-# ax2.set_ylabel('RH98 (m)', fontsize=LABEL_SIZE)
-# fig.subplots_adjust(bottom=0.2, top=0.95, left=0.18, right=0.8, hspace=0.55, wspace=0.22)
-# ax.legend(handles=[scatter1, scatter2], loc='center right', frameon=False, prop={'size':LABEL_SIZE}, ncol=1)
+    fig.subplots_adjust(bottom=0.1, top=0.92, left=0.12, right=0.98, hspace=0.4, wspace=0.25)
 
-outpath = r"E:\Thesis\AMFEdge\Figures\Description\anoNIRv_edge_fitting_example.jpg"
-fig.savefig(outpath, dpi=600)
+    if outpath is not None:
+        fig.savefig(outpath, dpi=600)
+
+if __name__ == "__main__":
+    VI_edge_path = r"F:\Research\AMFEdge\Edge\dAnoVI_Amazon_Edge_2023.csv"
+    VI_edge_df = pd.read_csv(VI_edge_path)
+    VI_edge_df['Dist'] = VI_edge_df['Dist']/1000
+    VI_edge_df['NIRv_diff'] = VI_edge_df['NIRv_diff']*-1
+    VI_popt_path = r"F:\Research\AMFEdge\Edge\dAnoVI_Amazon_Edge_Effect_2023.csv"
+    VI_popt_df = pd.read_csv(VI_popt_path)
+    VI_popt_df['nirv_para1'] = VI_popt_df['nirv_para1']*-1
+    VI_popt_df['nirv_para3'] = VI_popt_df['nirv_para3']*-1
+    VI_popt_df['nirv_magnitude'] = VI_popt_df['nirv_magnitude']*-1
+
+    RH_edge_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_2023.csv"
+    RH_edge_df = pd.read_csv(RH_edge_path)
+    RH_edge_df['Dist'] = RH_edge_df['Dist']/1000
+    RH_popt_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023.csv"
+    RH_popt_df = pd.read_csv(RH_popt_path)
+
+    ids = [776, 562] # Moderately and highly fragmented examples
+    dfs = []
+    for id in ids:
+        dst_VI_edge_df = VI_edge_df.loc[(VI_edge_df['Id'] == id)&(VI_edge_df['Dist'] <= 6)&(VI_edge_df['Dist'] != -1),:]
+        dst_VI_popt = VI_popt_df.loc[VI_popt_df['Id'] == id, ['nirv_para1', 'nirv_para2', 'nirv_para3', 'nirv_magnitude', 'nirv_scale']].values[0]
+        dfs.append((dst_VI_edge_df, dst_VI_popt))
+        print(dst_VI_popt)
+        dst_RH_edge_df = RH_edge_df.loc[(RH_edge_df['Id'] == id)&(RH_edge_df['Dist'] <= 6)&(RH_edge_df['Dist'] != -1),:]
+        dst_RH_popt = RH_popt_df.loc[RH_popt_df['Id'] == id, ['rh98_para1', 'rh98_para2', 'rh98_para3', 'rh98_magnitude', 'rh98_scale']].values[0]
+        dfs.append((dst_RH_edge_df, dst_RH_popt))
+        print(dst_RH_popt)
+
+    grid = (2, 2)
+    cols = [('Dist', 'NIRv_diff'), ('Dist', 'rh98_mean')]*2
+    ylabels = [r'$\Delta$NIRv-$\Delta$NIRv$_{interior}$ (%)', 'RH98 (m)']*2
+    titles = ['Good Fit of $\Delta$NIRv', 'Good Fit of RH98',
+              'Bad Fit of $\Delta$NIRv', 'Bad Fit of RH98']
+    xlims = [(-0.2,6.2)]*4
+    ylims = [(-1,8.5), (10, 27), (-3,1), (20, 32)]
+    plot_setting = {
+        'titles': titles,
+        'ylabels': ylabels,
+        'xlims': xlims,
+        'ylims': ylims,
+    }
+    outpath = r"E:\Thesis\AMFEdge\Figures\Edge\edge_fitting_exmaple.pdf"
+
+    main(dfs, grid, cols, plot_setting, outpath)

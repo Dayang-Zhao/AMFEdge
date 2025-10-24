@@ -102,31 +102,29 @@ def cal_edge_effect(group, x:str, y:str):
 def main(df):
     # Create output dataframe.
     outdf = pd.DataFrame(columns=[
-    'nirv_para1', 'nirv_para2', 'nirv_para3', 'nirv_r2', 'nirv_rmse','nirv_scale', 'nirv_magnitude',
-    'evi_para1', 'evi_para2', 'evi_para3', 'evi_r2', 'evi_rmse','evi_scale', 'evi_magnitude',
-    'ndwi_para1', 'ndwi_para2', 'ndwi_para3', 'ndwi_r2', 'ndwi_rmse','ndwi_scale', 'ndwi_magnitude'
+    'rh98_para1', 'rh98_para2', 'rh98_para3', 'rh98_r2', 'rh98_rmse','rh98_scale', 'rh98_magnitude',
+    'rh50_para1', 'rh50_para2', 'rh50_para3', 'rh50_r2', 'rh50_rmse','rh50_scale', 'rh50_magnitude',
     ])
 
     # Group by ID and fit model
     def _rename_dict(d:dict, prefix:str):
         return {prefix+'_'+key: value for key, value in d.items()}
 
-    nirv_out = cal_edge_effect(df, 'Dist', 'NIRv_mean')
-    evi_out = cal_edge_effect(df, 'Dist', 'EVI_mean')
-    ndwi_out = cal_edge_effect(df, 'Dist', 'NDWI_mean')
 
-    outrow = _rename_dict(nirv_out, 'nirv')\
-        | _rename_dict(evi_out, 'evi') | _rename_dict(ndwi_out, 'ndwi')
+    rh98_out = cal_edge_effect(df, 'Dist', 'rh98_mean')
+    rh50_out = cal_edge_effect(df, 'Dist', 'rh50_mean')
+
+    outrow = {'ID':id} | _rename_dict(rh98_out, 'rh98') | _rename_dict(rh50_out, 'rh50')
     outdf.loc[len(outdf)] = outrow
 
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\EdgeVI\VI_panAmazon_UndistEdge_2023.xlsx"
-    sheet_name = 'SWGRID'
+    path = r"F:\Research\AMFEdge\EdgeRH\RH_panAmazon_Edge_2023.xlsx"
+    sheet_name = 'SW'
     df = pd.read_excel(path, sheet_name=sheet_name)
     dst_df = df.loc[df['Dist']<=DIST_MAX]
 
     outdf = main(dst_df)
-    outpath = r"F:\Research\AMFEdge\EdgeVI\VI_panAmazon_UndistEdge_effect_2023.xlsx"
+    outpath = r"F:\Research\AMFEdge\EdgeRH\RH_panAmazon_Edge_effect_2023.xlsx"
     sd.save_pd_as_excel(outdf, outpath, sheet_name=sheet_name, index=False, add_row_or_col='col')

@@ -7,7 +7,7 @@ from functools import reduce
 import matplotlib.pyplot as plt
 
 year = 2005
-path = rf"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_UndistEdge_{year}.csv"
+path = rf"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_Edge_{year}.csv"
 df = pd.read_csv(path)
 
 pivot_df = df.pivot(index='Id', columns='Dist', values=['NIRv_mean', 'NDWI_mean'])
@@ -26,6 +26,6 @@ for end_dist in end_dists:
 
 outdf = reduce(lambda left, right: pd.merge(left, right, on='Id'), results)
 
-outdf.to_csv(rf"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_UndistEdge_{year}_diff.csv", index=False)
+outdf.to_csv(rf"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_Edge_{year}_diff.csv", index=False)
 
 print(outdf)

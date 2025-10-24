@@ -4,7 +4,7 @@ import zipfile
 
 PRE_FPATH = "F:/Research/AMFEdge/CMIP6/metaData"
 SUBDIR_LUT = {'historical':'Hist','ssp1_2_6': 'SSP1_26', 'ssp2_4_5': 'SSP2_45', 'ssp5_8_5': 'SSP5_85'}
-START_YEAR = 2004
+START_YEAR = 1985
 END_YEAR = 2014
 
 def unzip(rootdir, fname):
@@ -48,6 +48,14 @@ def download_cmip6(expriments=["ssp1_2_6"], variables=["precipitation"],model="c
             rootdir = f"{PRE_FPATH}/{SUBDIR_LUT[expriment]}/"
             fname = f"{model}_{expriment}_{variable}_2015_2100.zip"
             outpath = os.path.join(rootdir, fname)
+            new_fname = f"{model}_{expriment}_{variable}_2015_2100.nc"
+            new_outpath = os.path.join(rootdir, new_fname)
+
+            # Determine if the file already exists
+            if os.path.exists(new_outpath):
+                print(f"File {fname} already exists. Skipping download.")
+                continue
+
             try:
                 client.retrieve(dataset, request, outpath)
 
@@ -59,7 +67,7 @@ def download_cmip6(expriments=["ssp1_2_6"], variables=["precipitation"],model="c
             dst_fname = unzip(rootdir, fname)[0]
 
             # Rename the unzipped file.
-            new_fname = f"{model}_{expriment}_{variable}_2015_2100.nc"
+            
             os.rename(os.path.join(rootdir, dst_fname), os.path.join(rootdir, new_fname))
 
             # Delete the zip file.
@@ -76,14 +84,18 @@ if __name__ == "__main__":
                  'surface_air_pressure']
     # variables = ['near_surface_specific_humidity', 'surface_air_pressure']
     # compelete_models = ['access_cm2']
-    models = ['access_cm2', 'awi_cm_1_1_mr', 'bcc_csm2_mr', 'canesm5', 
-              'canesm5_canoe', 'cesm2', 'cmcc_cm2_sr5', 'cmcc_esm2',
-              'cnrm_cm6_1', 'cnrm_cm6_1_hr', 'cnrm_esm2_1','ec_earth3_veg_lr',
-              'fgoals_f3_l','fgoals_g3', 'fio_esm_2_0', 'gfdl_esm4', 
-              'hadgem3_gc31_ll', 'hadgem3_gc31_mm', 'iitm_esm', 'inm_cm4_8',
-              'inm_cm5_0', 'ipsl_cm5a2_inca', 'ipsl_cm6a_lr', 'kace_1_0_g',
-              'mcm_ua_1_0', 'miroc6', 'miroc_es2l', 'mpi_esm1_2_lr', 'mri_esm2_0',
-              'nesm3', 'noresm2_lm', 'noresm2_mm', 'taiesm1', 'ukesm1_0_ll']
+    # models = ['access_cm2', 'awi_cm_1_1_mr', 'bcc_csm2_mr', 'canesm5', 
+    #           'canesm5_canoe', 'cesm2', 'cmcc_cm2_sr5', 'cmcc_esm2',
+    #           'cnrm_cm6_1', 'cnrm_cm6_1_hr', 'cnrm_esm2_1','ec_earth3_veg_lr',
+    #           'fgoals_f3_l','fgoals_g3', 'fio_esm_2_0', 'gfdl_esm4', 
+    #           'hadgem3_gc31_ll', 'hadgem3_gc31_mm', 'iitm_esm', 'inm_cm4_8',
+    #           'inm_cm5_0', 'ipsl_cm5a2_inca', 'ipsl_cm6a_lr', 'kace_1_0_g',
+    #           'mcm_ua_1_0', 'miroc6', 'miroc_es2l', 'mpi_esm1_2_lr', 'mri_esm2_0',
+    #           'nesm3', 'noresm2_lm', 'noresm2_mm', 'taiesm1', 'ukesm1_0_ll']
+    models = ['mri_esm2_0', 'cnrm_cm6_1_hr', 'cesm2', 'ukesm1_0_ll',
+             'noresm2_mm', 'miroc6', 'taiesm1',
+             'kace_1_0_g', 'access_cm2', 'cmcc_cm2_sr5']
+
     
     # Download data for each model
     for model in models:

@@ -31,7 +31,7 @@ fig, axes = plt.subplots(
     )
 fig.set_size_inches(cm2inch(7.5), cm2inch(6))
 
-path = r"F:\Research\AMFEdge\Edge\Amazon_UndistEdge_Effect_2023.csv"
+path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_Effect_2023.csv"
 df = pd.read_csv(path)
 df = df.loc[df['nirv_scale']<=6000]
 df['class'] = df['Id'].isin(gv.NEGRID_IDS).map({True: 1, False: 2})

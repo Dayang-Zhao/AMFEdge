@@ -80,7 +80,7 @@ if __name__ == "__main__":
     xcols = ['rh98_magnitude','rh98_scale']
     ycol = 'nirv_magnitude'
 
-    path = r"F:\Research\AMFEdge\Model\Amazon_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
     df = pd.read_csv(path)
     df['rh98_magnitude'] = df['rh98_magnitude']*-1
     df['rh98_scale'] = df['rh98_scale']/1000

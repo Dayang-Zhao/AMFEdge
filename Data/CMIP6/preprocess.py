@@ -20,42 +20,31 @@ import xarray as xr
 from xarray.coding.cftimeindex import CFTimeIndex
 import osgeo
 import rioxarray as rxr
-import concurrent.futures
+from xclim.sdba import QuantileDeltaMapping
 
 import matplotlib.pyplot as plt
 
 import GlobVars as gv
 
-ROOT_DIR = r"F:\Research\AMFEdge\CMIP6\metaData"
-OUT_ROOTDIR = r"F:\Research\AMFEdge\CMIP6\Processed"
 BANDS_LUT = {'evspsbl':'total_evaporation_sum', 'rsds':'surface_solar_radiation_downwards_sum',
             'pr':'total_precipitation_sum','ps':'surface_pressure',
             'tas':'temperature_2m', 'huss':'specific_humidity_2m',
             }
-CAB_PATH  = r"F:\Research\AMFEdge\CMIP6\xCmip6_yEra5_cab_2004_2014.csv"
-CAB_DF = pd.read_csv(CAB_PATH)
 
-# STD_TIME = pd.date_range(start='2015-01-01', end='2100-12-31', freq='MS')
-STD_TIME = pd.date_range(start='2004-01-01', end='2014-12-31', freq='MS')
-EXP_STR = 'historical'
+MIN_LON, MAX_LON, MIN_LAT, MAX_LAT = -80, -44, -21, 9
+RES, HALF_RES = 1, 0.5
+NUM_LON, NUM_LAT = int((MAX_LON - MIN_LON) / RES), int((MAX_LAT - MIN_LAT) / RES)
+STD_LON = np.linspace(MIN_LON+HALF_RES, MAX_LON-HALF_RES, num=NUM_LON)        
+STD_LAT = np.linspace(MAX_LAT-HALF_RES, MIN_LAT+HALF_RES, num=NUM_LAT)
+# STD_TIME = pd.date_range(start='2004-01-01', end='2014-12-31', freq='MS')
 
-def save_as_tiff(ds, out_prefix):
-    """Save the dataset as a GeoTIFF file."""
-    times = ds['time'].values
-    ds = ds.rio.set_spatial_dims(x_dim='lon', y_dim='lat').rio.write_crs("EPSG:4326")
-
-    for time in times:
-        time_str = pd.to_datetime(time).strftime('%Y%m%d')
-        outpath = f"{out_prefix}_{time_str}.tif"
-
-        # Save the dataset as a GeoTIFF file.
-        dst_ds = ds.sel(time=time, drop=True).to_array(dim='band')
-
-        outda = dst_ds.rio.write_nodata(-9999)\
-            .rio.set_spatial_dims(x_dim='lon', y_dim='lat')\
-            .rio.write_crs("EPSG:4326")
-        outda.rio.to_raster(outpath, compress="ZSTD", driver='GTiff')
-        print(f"Saved {outpath}")
+ROOT_DIR = r"F:\Research\AMFEdge\CMIP6\metaData\SSP5_85"
+EXP_STR = 'ssp'
+BANDS_LUT = {'evspsbl':'total_evaporation_sum', 'rsds':'surface_solar_radiation_downwards_sum',
+            'pr':'c','ps':'surface_pressure',
+            'tas':'c', 'huss':'specific_humidity_2m',
+            }
+STD_TIME = pd.date_range(start='1985-01-01', end='2014-12-31', freq='MS')
 
 def fetch_fpaths4model(model, rootdir):
     fnames = glob.glob(f"{model}_{EXP_STR}*.nc", root_dir=rootdir)
@@ -111,17 +100,39 @@ def convert_unit(ds):
 
     return ds
 
-def linear_cab(ds, cab_df, vars):
-    for var in vars:
-        slope = cab_df.loc[cab_df['var'] == var, 'slope'].values[0]
-        intercept = cab_df.loc[cab_df['var'] == var, 'intercept'].values[0]
+def preprocess_era5(ds:xr.Dataset, std_time=STD_TIME):
 
-        cab_da = ds[var] * slope + intercept
-        ds[var] = cab_da
+    ds['total_evaporation_sum'] = ds['total_evaporation_sum'] * -1000
+    ds['total_precipitation_sum'] = ds['total_precipitation_sum'] * 1000
 
-    return ds
+    ds['WD'] = (ds['total_precipitation_sum'] - ds['total_evaporation_sum'])
 
-def preprocess_model(paths):
+    # Interpolate to standard grid if needed.
+    outds = ds.coarsen(lon=10, lat=10, boundary='pad').mean()
+    outds = outds.interp(lon=gv.STD_LON, lat=gv.STD_LAT, method='slinear')
+    outds = outds.interp(time=std_time, method='nearest')
+
+    # Add unit attributes.
+    unit_dict = {
+        'total_evaporation_sum': 'mm',
+        'surface_solar_radiation_downwards_sum': 'J/m²',
+        'total_precipitation_sum': 'mm',
+        'temperature_2m': 'K',
+        'specific_humidity_2m': 'kg/kg',
+        'surface_pressure': 'Pa',
+        'vpd': 'kPa',
+        'WD': 'mm'
+    }
+    for var in outds.data_vars:
+        if var in unit_dict:
+            outds[var].attrs['units'] = unit_dict[var]
+
+    # Mask value=0 data.
+    outds = outds.where(outds != 0)
+
+    return outds
+
+def preprocess_model(paths, std_time=STD_TIME):
     """Preprocess each model: merge and calculate VPD."""
 
     # Open all datasets and merge them.
@@ -131,9 +142,6 @@ def preprocess_model(paths):
         
         dst_var = list(set(ds.data_vars) & set(BANDS_LUT.keys()))
         da_list.append(ds[dst_var])
-
-        # lon_res, lat_res = get_ds_res(ds)
-        # print(f"Variable {dst_var} resolution: lon_res={lon_res}, lat_res={lat_res}")
 
     ds = xr.merge(da_list)
 
@@ -148,6 +156,12 @@ def preprocess_model(paths):
     if isinstance(ds.indexes['time'], CFTimeIndex):
         ds['time'] = pd.to_datetime(ds.indexes['time'].to_datetimeindex())
 
+    # Linearly regression.
+    ds['WD'] = (ds['pr'] - ds['evspsbl'])*30*24*3600
+    dst_ds = ds.isel(time=ds['time.month'].isin([6, 7, 8, 9, 10]))
+    fit = dst_ds.polyfit(dim='time', deg=1)
+
+
     # Rename variables according to ERA5.
     ds = ds.rename({v: BANDS_LUT[v] for v in BANDS_LUT.keys() if v in ds.data_vars})
 
@@ -161,16 +175,28 @@ def preprocess_model(paths):
     # Calculate water deficit (WD).
     ds['WD'] = (ds['total_precipitation_sum'] - ds['total_evaporation_sum'])
 
-    # Linear calibration with ERA5.
-    # ds = linear_cab(ds, CAB_DF, CAB_DF['var'].tolist())
-
     # Interpolate to standard grid if needed.
-    outds = ds.interp(lon=gv.STD_LON, lat=gv.STD_LAT, method='slinear')
-    outds = outds.interp(time=STD_TIME, method='nearest')
+    outds = ds.interp(lon=STD_LON, lat=STD_LAT, method='slinear')
+    outds = outds.interp(time=std_time, method='nearest')
 
     # Drop unnecessary dimensions.
     if 'height' in outds.coords:
         outds = outds.drop_vars('height')
+
+    # Add unit attributes.
+    unit_dict = {
+        'total_evaporation_sum': 'mm',
+        'surface_solar_radiation_downwards_sum': 'J/m²',
+        'total_precipitation_sum': 'mm',
+        'temperature_2m': 'K',
+        'specific_humidity_2m': 'kg/kg',
+        'surface_pressure': 'Pa',
+        'vpd': 'kPa',
+        'WD': 'mm'
+    }
+    for var in outds.data_vars:
+        if var in unit_dict:
+            outds[var].attrs['units'] = unit_dict[var]
 
     # Sort variables.
     band_names = list(BANDS_LUT.values()) + ['vpd', 'WD']
@@ -179,66 +205,16 @@ def preprocess_model(paths):
 
     return outds
 
-def get_ds_res(ds):
-    """Get the resolution of the dataset."""
-    lon_res = ds['lon'].diff(dim='lon').mean().item()
-    lat_res = ds['lat'].diff(dim='lat').mean().item()
-    return lon_res, lat_res
-
-def main(models, rootdir=ROOT_DIR, outdir=OUT_ROOTDIR):
+if __name__ == "__main__":
     """Main function to preprocess all models."""
+    # List of CMIP6 models to process.
+    models = ['mri_esm2_0', 'cnrm_cm6_1_hr', 'cesm2', 'ukesm1_0_ll',
+             'noresm2_mm', 'miroc6', 'taiesm1',
+             'kace_1_0_g', 'access_cm2', 'cmcc_cm2_sr5']
+
     # Preprocess each model.
-    ds_list = []
-    good_models = []
+    models = ['noresm2_mm']
     for model in models:
-        try:
-            print(f"Processing model: {model}")
-            paths = fetch_fpaths4model(model, rootdir)
+        paths = fetch_fpaths4model(model, ROOT_DIR)
+        ds = preprocess_model(paths, std_time=STD_TIME)
 
-            # Preprocess the model.
-            ds = preprocess_model(paths)
-
-            # Remove models with spatial resolution > 2 degrees.
-            lon_res, lat_res = get_ds_res(ds)
-            if lon_res > 2 or lat_res > 2:
-                print(f"Model {model} has resolution > 2 degrees, skipping.")
-                continue
-            else:
-                ds_list.append(ds)
-                
-                good_models.append(model)
-        except Exception as e:
-            print(f"Error processing model {model}: {e}")
-            continue
-    print(good_models)
-
-    # Calculate the average and std across all models.
-    if ds_list:
-        combined_ds = xr.concat(ds_list, dim='model')
-        avg_ds = combined_ds.mean(dim='model', keep_attrs=True, skipna=True)
-        std_ds = combined_ds.std(dim='model', keep_attrs=True, skipna=True)
-        avg_ds = avg_ds.rename(dict(zip(avg_ds.data_vars, [f"{var}_avg" for var in avg_ds.data_vars])))
-        std_ds = std_ds.rename(dict(zip(std_ds.data_vars, [f"{var}_std" for var in std_ds.data_vars])))
-        outds = xr.merge([avg_ds, std_ds])
-
-        # Save output datasets as tiff.
-        out_prefname = f"{outdir}/cmip6"
-        # save_as_tiff(outds, out_prefname)
-    else:
-        print("No datasets to process.")
-
-if __name__ == '__main__':
-    models = ['access_cm2', 'awi_cm_1_1_mr', 'bcc_csm2_mr', 'canesm5',
-              'cesm2', 'cmcc_cm2_sr5', 'cmcc_esm2',
-              'cnrm_cm6_1_hr', 'ec_earth3_veg_lr',
-              'fgoals_f3_l', 'fgoals_g3', 'fio_esm_2_0', 'gfdl_esm4',
-              'hadgem3_gc31_mm', 'iitm_esm',
-              'inm_cm5_0', 'ipsl_cm6a_lr', 'kace_1_0_g',
-              'mcm_ua_1_0', 'miroc6', 'mpi_esm1_2_lr', 'mri_esm2_0',
-              'nesm3', 'noresm2_mm', 'taiesm1', 'ukesm1_0_ll']
-    experiments = ['Hist'] # 'Hist', 'SSP1_26', 'SSP2_45', 'SSP5_85'
-    
-    for experiment in experiments:
-        root_dir = os.path.join(ROOT_DIR, experiment)
-        out_dir = os.path.join(OUT_ROOTDIR, experiment)
-        main(models, rootdir=root_dir, outdir=out_dir)

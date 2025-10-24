@@ -8,6 +8,7 @@ from functools import reduce
 from sklearn.ensemble import RandomForestRegressor
 import scipy.sparse
 from sklearn.metrics import mean_squared_error, r2_score
+import Attribution.LcoRF as lcorf
 
 def to_array(self):
     return self.toarray()
@@ -21,11 +22,11 @@ import matplotlib.ticker as ticker
 plt.ion()
 import GlobVars as gv
 
-xcols = ['length_mean', 'HAND_mean','undistForest_dist', 
-        'SCC_mean', 'sand_mean_mean',
-        'anoMCWD_mean','surface_net_solar_radiation_sum_mean',
-        'vpd_mean', 'total_precipitation_sum_mean'
-        ]
+xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
+            'SCC_mean', 'sand_mean_mean', 
+            'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
+            'vpd_mean', 'total_precipitation_sum_mean', 'temperature_2m_mean',
+            ]
 LABEL_SIZE = 10
 font = {'family' : 'Arial',
         'weight' : 'normal',
@@ -66,7 +67,7 @@ def main(datas:list, grid:tuple, plot_setting:dict, outpath:str):
             ax.set_ylim(ylim)
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
-            ax.text(0.05, 0.8, f'$R^2$ = {r2:.3f}\nMSE = {mse**0.5:.3f}',
+            ax.text(0.05, 0.8, f'$R^2$ = {r2:.2f}\nMSE = {mse**0.5:.3f}',
                     transform=ax.transAxes, fontsize=LABEL_SIZE+2)
     
     fig.subplots_adjust(bottom=0.15, top=0.9, left=0.1, right=0.98, hspace=0, wspace=0.25)
@@ -76,9 +77,10 @@ def main(datas:list, grid:tuple, plot_setting:dict, outpath:str):
 
 
 if __name__ == "__main__":
-    path = r"F:\Research\AMFEdge\Model\Amazon_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
     df = pd.read_csv(path)
     df['nirv_scale'] = df['nirv_scale']/1000
+    df = df[(df['nirv_scale'] <= 6)]
     ycols = ['nirv_magnitude', 'nirv_scale']
     dst_df = df[xcols+ycols].dropna(axis=0)
 
@@ -92,6 +94,7 @@ if __name__ == "__main__":
 
         model = RandomForestRegressor(n_estimators=50, max_depth=5, criterion='squared_error',
                                     min_samples_split=2, min_samples_leaf=2, random_state=42)
+        model = lcorf.LcoRF()
         model.fit(X, y)
         # Predict
         y_pred = model.predict(X)
@@ -101,11 +104,11 @@ if __name__ == "__main__":
 
     # Plot setting
     plot_setting = {
-        'titles': ['$\Delta$NIRv Magnitude (%)', '$\Delta$NIRv Scale (km)'],
+        'titles': ['$M_{\Delta \mathrm{NIRv}}$ (%)', '$S_{\Delta \mathrm{NIRv}}$ (km)'],
         'xlabels': ['Predicted values (%)', 'Predicted values (km)'],
         'ylabels': ['Observed values (%)', 'Observed values (km)'],
-        'xlims': [[-6, 6], [0, 6.1]],
-        'ylims': [[-6, 6], [0, 6.1]]
+        'xlims': [[-8, 12], [0, 6.1]],
+        'ylims': [[-8, 12], [0, 6.1]]
     }
     outpath = r"E:\Thesis\AMFEdge\Figures\Model\RF_performance.jpg"
     main(datas, grid=(1, 2), plot_setting=plot_setting, outpath=outpath)

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 plt.ion()
 
 import Data.clip_data as cld
+import Data.convert_data as cd
 import Data.save_data as sd
 
 def rename_ds(ds:xr.Dataset, suffix:str):
@@ -64,12 +65,20 @@ def stat_grids(ds:xr.Dataset, shp:gpd.GeoDataFrame, ids:list, crs:str='EPSG:4326
 
 if __name__ == '__main__':
     year = 2023
-    path = r"F:\Research\AMFEdge\AGB\scale_mean.tif"
-    # ds = xr.open_dataset(path)
-    ds = rxr.open_rasterio(path, masked=True)
-    ds = ds.sel(band=1).drop('band').to_dataset(name='agb_scale').rename({'x': 'lon', 'y': 'lat'})
-    ds = ds.rio.set_spatial_dims(x_dim='lon', y_dim='lat')\
-        .rio.write_crs("EPSG:4326")
+    paths = [rf"F:\Research\AMFEdge\Meteo\Meta\Amazon_GLEAM_{year}_anoMeteo.tif",
+             r"F:\Research\AMFEdge\Meteo\Meta\Amazon_GLEAM_histMCWD.tif",
+             r"F:\Research\AMFEdge\Meteo\Meta\Amazon_GLEAM_2023_droughtPeriod.tif"
+             ]
+    # nvar = ['Gleam_MCWD', 'Gleam_stdAnoMCWD', 'Gleam_absAnoMCWD']
+    ds_array = []
+    for i, path in enumerate(paths):
+        ds = cd.tif2ds(path)
+        # ds = ds.rename({list(ds.data_vars)[0]: nvar[i]})
+        ds_array.append(ds)
+    ds = xr.merge(ds_array)
+    ds = ds.rename({'MCWD':'histMCWD'})
+    nvar = list(ds.data_vars)
+
     shp_path = r"F:\Research\AMFEdge\Shapefile\Amazon_Grid_Final_15deg.shp"
     shp = gpd.read_file(shp_path).rename(columns={'id': 'Id'})
     ids = shp['Id'].unique()
@@ -78,5 +87,5 @@ if __name__ == '__main__':
     outdf = stat_grids(ds, shp, ids)
 
     # Save the output dataframe to a CSV file.
-    outpath = rf"F:\Research\AMFEdge\AGB\Amazon_Grids_stable_agb_scale_stat.csv"
+    outpath = rf"F:\Research\AMFEdge\Meteo\Amazon_GLEAM_Grids_{year}_Meteo_stat.csv"
     sd.save_pd_as_csv(outdf, outpath, index=False, add_row_or_col='col')

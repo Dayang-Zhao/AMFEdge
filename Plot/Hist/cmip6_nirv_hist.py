@@ -12,8 +12,8 @@ font = {'family' : 'Arial',
         'weight' : 'normal',
         'size'   : LABEL_SIZE}
 mpl.rc('font', **font)
-outpath = r"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_pred_ave.csv"
-ave_df = pd.read_csv(outpath)
+# outpath = r"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_pred_ave.csv"
+# ave_df = pd.read_csv(outpath)
 
 def cm2inch(value):
     return value/2.54
@@ -40,19 +40,20 @@ def main(dfs:list, col:str, grid:tuple, plot_setting:dict, outpath:str):
             # Plot.
             sns.kdeplot(data=data, x=col, hue='scenario', ax=ax, palette=palette, legend=False,
                         common_norm=False, linewidth=2, fill=True, alpha=0.5)
+            # sns.histplot(data=data, x=col, hue='scenario', ax=ax, palette=palette, legend=False, bins=30)
             
             # Average line.
-            scenario = data['scenario'].values[0]
-            pos_ave = ave_df.loc[ave_df['scenario']==scenario, 'pos_ave'].values[0]
-            neg_ave = ave_df.loc[ave_df['scenario']==scenario, 'neg_ave'].values[0]
+            # scenario = data['scenario'].values[0]
+            # pos_ave = ave_df.loc[ave_df['scenario']==scenario, 'pos_ave'].values[0]
+            # neg_ave = ave_df.loc[ave_df['scenario']==scenario, 'neg_ave'].values[0]
             # ax.axvline(x=pos_ave, color=palette[scenario], linestyle='-.', linewidth=2)
             # ax.axvline(x=neg_ave, color=palette[scenario], linestyle='-.', linewidth=2)
 
             # Text.
-            ax.text(0.8, 0.4, f'{pos_ave:.2f}%', transform=ax.transAxes,
-                    ha='right', color=palette[scenario], fontsize=LABEL_SIZE-2)
-            ax.text(0.15, 0.4, f'{neg_ave:.2f}%', transform=ax.transAxes,
-                    ha='right', color=palette[scenario], fontsize=LABEL_SIZE-2)
+            # ax.text(0.8, 0.4, f'{pos_ave:.2f}%', transform=ax.transAxes,
+            #         ha='right', color=palette[scenario], fontsize=LABEL_SIZE-2)
+            # ax.text(0.15, 0.4, f'{neg_ave:.2f}%', transform=ax.transAxes,
+            #         ha='right', color=palette[scenario], fontsize=LABEL_SIZE-2)
 
             # Plot setting.
             ax.set_xlabel(xlabel=xlabel, labelpad=-0.2)
@@ -80,8 +81,9 @@ if __name__ == '__main__':
     scenarios = ['SSP1_26', 'SSP2_45', 'SSP5_85']
     dfs = []
     for scenario in scenarios:
-        df = pd.read_csv(rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_pred_{scenario}.csv")
-        # df = df[df['year']>=2060]
+        df = pd.read_csv(rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}.csv")
+        df.drop(columns=['model'], inplace=True)
+        df = df.groupby(['Id', 'year']).mean().reset_index()
         df['scenario'] = scenario
         dfs.append(df)
     # data = pd.concat(dfs, ignore_index=True)
@@ -90,7 +92,7 @@ if __name__ == '__main__':
 
     # Plot setting.
     grid = (3,1)
-    xlabel = r'$M_{\nabla \mathrm{NIRv}}$ (%)'
+    xlabel = r'$M_{\Delta \mathrm{NIRv}}$ (%)'
     ylabel = 'Probability Density'
     labels = ['RCP 2.6', 'RCP 4.5', 'RCP 8.5']
     title = ['']

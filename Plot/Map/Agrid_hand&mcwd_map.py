@@ -79,14 +79,16 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    path = r"F:\Research\AMFEdge\Model\Amazon_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
     df = pd.read_csv(path)
-    df['MCWD_mean'] = df['MCWD_mean']*-1
+    # df['MCWD_mean'] = df['MCWD_mean']*-1
+    df['dMCWD_mean'] = df['MCWD_mean'] - df['histMCWD_mean']
+    df['dMCWD_mean'] = df['dMCWD_mean']*-1
 
     # Merge data.
     gdf_merged = gdf.merge(df, on="Id", how="left")
     dfs = [gdf_merged]*2
-    cols = ['HAND_mean', 'MCWD_mean']
+    cols = ['HAND_mean', 'dMCWD_mean']
     grid = (1, 2)
 
     # Plot setting.
@@ -94,7 +96,7 @@ if __name__ == "__main__":
     cmap1 = sns.diverging_palette(145, 300, s=60, as_cmap=True)
     levels = np.arange(0, 21, 2)
     norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
-    levels = np.arange(0, 401, 50)
+    levels = np.arange(0, 201, 25)
     cmap2 = sns.color_palette(palette='YlOrBr', as_cmap=True)
 
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)

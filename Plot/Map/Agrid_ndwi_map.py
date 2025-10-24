@@ -78,7 +78,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    csv_path = r"F:\Research\AMFEdge\Edge\Amazon_UndistEdge_Effect_2023.csv"
+    csv_path = r"F:\Research\AMFEdge\Edge\Amazon_Edge_Effect_2023.csv"
     df = pd.read_csv(csv_path)
     df['ndwi_scale'] = df['ndwi_scale']/1000
 

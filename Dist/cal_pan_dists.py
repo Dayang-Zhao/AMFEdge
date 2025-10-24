@@ -52,13 +52,14 @@ def estimate_population_mean_std(df, dst_var:str):
 
 if __name__ == '__main__':
     # Obtain the ids with valid edge effect curves.
-    edge_path = r"F:\Research\AMFEdge\EdgeVI\VI_Amazon_UndistEdge_Effect_2023.csv"
+    edge_path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_Effect_2023.csv"
     edge_df = pd.read_csv(edge_path)
-    nonan_ids = edge_df.loc[edge_df['nirv_scale'].notna(), 'Id']
-    path = r"F:\Research\AMFEdge\EdgeVI\VI_Amazon_UndistEdge_2023.csv"
+    nonan_ids = edge_df.loc[edge_df['nirv_magnitude'].notna(), 'Id']
+    path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_2023.csv"
     df = pd.read_csv(path)
     df = df[df['Id'].isin(gv.NEGRID_IDS) & df['Id'].isin(nonan_ids)]
-    dst_vars = ['NIRv', 'NDWI', 'EVI']
+    # dst_vars = ['NIRv', 'NDWI', 'EVI']
+    dst_vars = ['rh98', 'rh50']
 
     outdfs = []
     for dist in gv.DISTS:
@@ -77,5 +78,5 @@ if __name__ == '__main__':
 
     # Save the output dataframe to a CSV file.
     outdf = outdf[outdf['Dist']<=6300]
-    outpath = r"F:\Research\AMFEdge\EdgeVI\VI_panAmazon_UndistEdge_2023.xlsx"
-    sd.save_pd_as_excel(outdf, outpath, sheet_name='NEGRID', index=False, add_row_or_col='col')
+    outpath = r"F:\Research\AMFEdge\EdgeRH\RH_panAmazon_Edge_2023.xlsx"
+    sd.save_pd_as_excel(outdf, outpath, sheet_name='NE', index=False, add_row_or_col='col')

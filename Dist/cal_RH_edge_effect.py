@@ -58,7 +58,7 @@ def cal_magnitude(scale, popt):
     # magnitude = y[0] - y[1]
 
     # Magnitude is the difference between dist=0 and the synoptic value.
-    magnitude = popt[0]
+    magnitude = popt[0]*-1
     return magnitude
 
 def cal_edge_effect(group, x:str, y:str):
@@ -102,15 +102,15 @@ def cal_edge_effect(group, x:str, y:str):
 
 def main(df, ids):
     # Create output dataframe.
-    # outdf = pd.DataFrame(columns=[
-    # 'ID', 
-    # 'rh98_para1', 'rh98_para2', 'rh98_para3', 'rh98_r2', 'rh98_rmse','rh98_scale', 'rh98_magnitude',
-    # 'rh50_para1', 'rh50_para2', 'rh50_para3', 'rh50_r2', 'rh50_rmse','rh50_scale', 'rh50_magnitude',
-    # ])
     outdf = pd.DataFrame(columns=[
     'ID', 
-    'agb_para1', 'agb_para2', 'agb_para3', 'agb_r2', 'agb_rmse','agb_scale', 'agb_magnitude',
+    'rh98_para1', 'rh98_para2', 'rh98_para3', 'rh98_r2', 'rh98_rmse','rh98_scale', 'rh98_magnitude',
+    'rh50_para1', 'rh50_para2', 'rh50_para3', 'rh50_r2', 'rh50_rmse','rh50_scale', 'rh50_magnitude',
     ])
+    # outdf = pd.DataFrame(columns=[
+    # 'ID', 
+    # 'agb_para1', 'agb_para2', 'agb_para3', 'agb_r2', 'agb_rmse','agb_scale', 'agb_magnitude',
+    # ])
 
     # Group by ID and fit model
     def _rename_dict(d:dict, prefix:str):
@@ -118,23 +118,23 @@ def main(df, ids):
     
     for id in ids:
         group = df[df['Id'] == id]
-        # rh98_out = cal_edge_effect(group[group['rh98_count']>=600], 'Dist', 'rh98_mean')
-        # rh50_out = cal_edge_effect(group[group['rh50_count']>=600], 'Dist', 'rh50_mean')
+        rh98_out = cal_edge_effect(group[group['rh98_count']>=600], 'Dist', 'rh98_mean')
+        rh50_out = cal_edge_effect(group[group['rh50_count']>=600], 'Dist', 'rh50_mean')
 
-        # outrow = {'ID':id} | _rename_dict(rh98_out, 'rh98') | _rename_dict(rh50_out, 'rh50')
-        agb_out = cal_edge_effect(group[group['agb_count']>=600], 'Dist', 'agb_mean')
-        outrow = {'ID':id} | _rename_dict(agb_out, 'agb')
+        outrow = {'ID':id} | _rename_dict(rh98_out, 'rh98') | _rename_dict(rh50_out, 'rh50')
+        # agb_out = cal_edge_effect(group[group['agb_count']>=600], 'Dist', 'agb_mean')
+        # outrow = {'ID':id} | _rename_dict(agb_out, 'agb')
         outdf.loc[len(outdf)] = outrow
 
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\AGB\EdgeAGB\AGB_Amazon_Edge_2023.csv"
+    path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_2023.csv"
     df = pd.read_csv(path)
     dst_df = df.loc[df['Dist']<=DIST_MAX]
     dst_ids = df['Id'].unique()
     # dst_ids = [166, 167]
 
     outdf = main(dst_df, ids=dst_ids)
-    outpath = r"F:\Research\AMFEdge\AGB\EdgeAGB\AGB_Amazon_Edge_Effect_2023.csv"
+    outpath = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023.csv"
     outdf.rename(columns={'ID':'Id'}).to_csv(outpath, index=False)

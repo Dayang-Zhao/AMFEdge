@@ -25,23 +25,27 @@ import GlobVars as gv
 import Data.save_data as sd
 import Attribution.LcoRF as lcorf
 
-xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
-         'SCC_mean', 'sand_mean_mean',
-        'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
-         'vpd_mean', 'total_precipitation_sum_mean','temperature_2m_mean']
-ycol = 'nirv_scale'
+xcols = [
+    'MCWD_mean', 'histMCWD_mean','vpd_mean', 'gpm_total_precipitation_sum_mean',
+    'temperature_2m_mean', 'surface_solar_radiation_downwards_sum_mean', 
+    'rh98_scale', 'rh98_magnitude', 
+    'HAND_mean',
+    'SCC_mean', 'sand_mean_mean', 
+    ]
+groups = ['Drought']*6 + ['Forest structure']*2 + ['Hydrology'] + ['Soil']*2
+ycol = 'nirv_magnitude'
 
-path = r"F:\Research\AMFEdge\Model\Amazon_Attribution.csv"
+path = r"F:\Research\AMFEdge\Model\Amazon_GLEAM_Edge_Attribution.csv"
 raw_df = pd.read_csv(path)
 df = raw_df.dropna(subset=xcols+[ycol])
+
 df = df[df['nirv_scale'] <= 6000]
 
 X = df[xcols]
 y = df[ycol]
 
-# # Standardize features
-# scaler = StandardScaler()
-# X = scaler.fit_transform(X)
+# ----------------- Split data. --------------------------------
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # ----------------- XGB BayersSearchCV. --------------------------------
 def tune(outpath):
@@ -49,13 +53,13 @@ def tune(outpath):
                                     booster='gbtree', random_state=42)
     fit_params = {
         'early_stopping_rounds': 10,
-        'eval_set':[(X, y)],
+        'eval_set':[(X_train, y_train)],
         'verbose': True
     }
 
     search_space = {
         'max_depth': Integer(2, 5, 'uniform'),
-        'n_estimators': Integer(30, 60, 'uniform'),
+        'n_estimators': Integer(20, 60, 'uniform'),
         'learning_rate': Real(0.1, 1.0, 'log-uniform'),
         'scale_pos_weight': Real(1e-6, 1, 'log-uniform'),
         'min_child_weight': Real(0, 10, 'uniform'),
@@ -72,7 +76,7 @@ def tune(outpath):
         estimator=regress_model,
         search_spaces=search_space,
         fit_params=fit_params,
-        cv=5,
+        cv=4,
         random_state=42,
         n_iter=10,
         verbose=1,
@@ -101,6 +105,16 @@ model = lcorf.LcoRF()
 model.fit(X, y)
 print(f"R^2: {model.score(X, y)}")
 
+# ---------------- SHAP ------------------
+import shap
+explainer = shap.TreeExplainer(model.model)  # inner RF model
+shap_values = explainer.shap_values(X)
+
+# Adjust SHAP values by the linear correction
+scaled_shap_values = np.array(shap_values) * model.linear_reg.slope
+# shap_values = explainer.shap_values(X)
+shap.summary_plot(scaled_shap_values, X, plot_type="bar")
+
 # ---------------- permutation importance --------------
 from sklearn.metrics import r2_score, root_mean_squared_error
 import numpy as np
@@ -118,9 +132,12 @@ for i in r.importances_mean.argsort()[::-1]:
 # Save as CSV
 importance_df = pd.DataFrame({
     'Feature': xcols,
+    'Group': groups,
     'Importance (ΔR²)': r.importances_mean,
     'Importance std': r.importances_std,
 })
+importance_df['Importance percent'] = importance_df['Importance (ΔR²)'] / np.sum(importance_df['Importance (ΔR²)']) * 100
+print(importance_df)
 
-outpath = r"F:\Research\AMFEdge\Model\RF_PFI_importance.xlsx"
+outpath = r"F:\Research\AMFEdge\Model\RF_GLEAM_Edge_PFI_importance.xlsx"
 sd.save_pd_as_excel(importance_df, outpath, sheet_name=ycol, index=False)

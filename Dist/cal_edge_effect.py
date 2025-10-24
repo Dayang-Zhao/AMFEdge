@@ -28,7 +28,7 @@ def fit(xdata, ydata):
                 check_finite=False, nan_policy='omit')
         return popt
     except RuntimeError:
-        return False
+        return np.array([False])
 
 # Calculate fitting performance
 def cal_fit_performance(xdata, ydata, popt):
@@ -55,23 +55,21 @@ def cal_scale(popt):
 def cal_magnitude(scale, popt):
     # # Magnitude is the difference between dist=60 and dist > 3km.
     # x = np.concatenate((np.array([60]), np.arange(3000, DIST_MAX+1, 1)))
-    x = np.arange(0, 121)
-    y = func(x, *popt)
-    magnitude = y.mean()
+    # x = np.arange(0, 121)
+    # y = func(x, *popt)
+    # magnitude = y.mean()
 
     # Magnitude is the difference between dist=60 and the synoptic value.
-    # magnitude = popt[0]
+    magnitude = popt[0]*-1
     return magnitude
 
 def cal_edge_effect(group, x:str, y:str):
     dst_group = group.loc[group['Dist'] > 0]
     # dst_group = group.loc[(group['Dist'] > 0)&(group[y[:-5]+'_skew'] <= 1)&(group[y[:-5]+'_skew'] >= -1)]
     xdata, ydata = dst_group[x].values[1:], dst_group[y].values[1:]
-    # intact_value = group[group['Dist'] == -1][y].values[0]
-    intact_df = group[(group['Dist'] >= 3000)&(group['Dist'] <= DIST_MAX)]
-    intact_value = (intact_df[y] * intact_df[y.split('_')[0]+'_count']).sum()/intact_df[y.split('_')[0]+'_count'].sum()
-    # intact_value = intact_df[y].mean()
-    ydata = (ydata - intact_value)*-1
+    # intact_df = group[(group['Dist'] >= 3000)&(group['Dist'] <= DIST_MAX)]
+    # intact_value = (intact_df[y] * intact_df[y.split('_')[0]+'_count']).sum()/intact_df[y.split('_')[0]+'_count'].sum()
+    # ydata = (ydata - intact_value)*-1
 
     # Remove NaN values
     mask = ~np.isnan(xdata) & ~np.isnan(ydata)
@@ -132,12 +130,12 @@ def main(df, ids):
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\Edge\anoVI_Amazon_UndistEdge_2023.csv"
+    path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_GLEAM_Edge_2023.csv"
     df = pd.read_csv(path)
     dst_df = df.loc[df['Dist']<=DIST_MAX]
     dst_ids = df['Id'].unique()
     # dst_ids = [166, 167]
 
     outdf = main(dst_df, ids=dst_ids)
-    outpath = r"F:\Research\AMFEdge\Edge\Amazon_UndistEdge_Effect_2023.csv"
+    outpath = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_GLEAM_Edge_Effect_2023.csv"
     outdf.rename(columns={'ID':'Id'}).to_csv(outpath, index=False)

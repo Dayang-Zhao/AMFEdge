@@ -51,7 +51,7 @@ def main(dfs:list, fit_dfs:list, grid:tuple, plot_setting:dict, outpath:str):
     fig, axes = plt.subplots(
         nrows=nrows, ncols=ncols, sharex=True
         )
-    fig.set_size_inches(cm2inch(7), cm2inch(8))
+    fig.set_size_inches(cm2inch(7), cm2inch(7))
 
     for i in range(nrows):
         for j in range(ncols):
@@ -66,6 +66,7 @@ def main(dfs:list, fit_dfs:list, grid:tuple, plot_setting:dict, outpath:str):
             color = plot_setting['colors'][i*ncols+j]
             label = plot_setting['labels'][i*ncols+j]
             ylim = plot_setting['ylims'][i*ncols+j]
+            vline = plot_setting['vlines'][i*ncols+j]
 
             # Plot.
             markers, caps, bars = ax.errorbar(
@@ -77,17 +78,18 @@ def main(dfs:list, fit_dfs:list, grid:tuple, plot_setting:dict, outpath:str):
                     '-', color=color, linewidth=1.5, label=label, zorder=10)
 
             # Draw edge and intact forest area.
-            ax.axvspan(0, 0.12, color= "#e5086b8f", alpha=0.3)
-            ax.axvspan(3, 6, color='#e3b87f', alpha=0.3)
+            ax.axvspan(0, vline, color= "#e5086b8f", alpha=0.2, lw=0)
+            # ax.axvspan(vline, 6, color='#e3b87f', alpha=0.3)
+            # ax.axvline(x=vline, color='grey', linestyle='--', linewidth=2)
 
             # Text: edge and intact anoNIRv.
-            edge_dists = np.arange(0, 121);
-            intact_dists = np.arange(3000, 6001);
-            edge_value = (func(edge_dists, *fit_df.iloc[0, 0:3])*-1).mean()
-            intact_value = (func(intact_dists, *fit_df.iloc[0, 0:3])*-1).mean()
-            ax.text(0.7, 2, f'{edge_value:.2f}', color="#e5086b8f", ha='center', va='center', fontsize=12)
-            ax.text(4.5, 2, f'{intact_value:.2f}', color="#e3b87f", ha='center', va='center', fontsize=12)
-
+            # edge_dists = np.arange(0, 121)
+            # intact_dists = np.arange(3000, 6001)
+            # edge_value = (func(edge_dists, *fit_df.iloc[0, 0:3])*-1).mean()
+            # intact_value = (func(intact_dists, *fit_df.iloc[0, 0:3])*-1).mean()
+            # ax.text(0.7, 2, f'{edge_value:.2f}', color="#e5086b8f", ha='center', va='center', fontsize=12)
+            # ax.text(4.5, 2, f'{intact_value:.2f}', color="#e3b87f", ha='center', va='center', fontsize=12)
+            ax.set_xlim(-0.2, 6.2)
             ax.set_ylim(ylim)
             if i == nrows-1:
                 ax.set_xlabel('$d$ (km)')
@@ -102,7 +104,7 @@ def main(dfs:list, fit_dfs:list, grid:tuple, plot_setting:dict, outpath:str):
                 ax.set_title(title_num+' '+title, loc='left')
 
     # Adjust.
-    fig.text(0.01, 0.5, r'$\nabla$NIRv (%)', va="center", rotation="vertical")
+    fig.text(0.01, 0.5, r'$\Delta$NIRv (%)', va="center", rotation="vertical")
     fig.subplots_adjust(bottom=0.15, top=0.9, left=0.18, right=0.95, hspace=0, wspace=0.22)
 
     if outpath is not None:
@@ -110,27 +112,27 @@ def main(dfs:list, fit_dfs:list, grid:tuple, plot_setting:dict, outpath:str):
 
 if __name__ == '__main__':
     # Original data.
-    path = r"F:\Research\AMFEdge\Edge\anoVI_panAmazon_UndistEdge_2023.xlsx"
-    df1 = pd.read_excel(path, sheet_name='NEGRID')
+    path = r"F:\Research\AMFEdge\Edge\Main\anoVI_panAmazon_Edge_2023.xlsx"
+    df1 = pd.read_excel(path, sheet_name='NE')
     df1 = df1.loc[df1['Dist']<=6000]
-    df2 = pd.read_excel(path, sheet_name='SWGRID')
+    df2 = pd.read_excel(path, sheet_name='SW')
     df2 = df2.loc[df2['Dist']<=6000]
     dfs = [df1, df2]
 
     # Fitting data.
-    path = r"F:\Research\AMFEdge\Edge\panAmazon_UndistEdge_effect_2023.xlsx"
-    df1 = pd.read_excel(path, sheet_name='NEGRID')
-    df2 = pd.read_excel(path, sheet_name='SWGRID')
+    path = r"F:\Research\AMFEdge\Edge\Main\anoVI_panAmazon_Edge_effect_2023.xlsx"
+    df1 = pd.read_excel(path, sheet_name='NE')
+    df2 = pd.read_excel(path, sheet_name='SW')
     fit_dfs = [df1, df2]
 
     # Plot setting.
     colors = ["#CC4348", "#3076CC"]
     labels = ['NE', 'SW']
-    ylims = [(-2.1, 3), (-0.5, 2.8)]
-    # ylims = [(0.15, 0.26), (0.15, 0.26)]
-    plot_setting = {'colors': colors, 'labels': labels, 'ylims': ylims}
+    ylims = [(-2, 4.5), (-0.5, 2.5)]
+    vlines = [1.253, 2.101]
+    plot_setting = {'colors': colors, 'labels': labels, 'ylims': ylims, 'vlines': vlines}
 
     grid = (2, 1)
-    outpath = r"E:\Thesis\AMFEdge\Figures\Edge\pan_NIRv_edge.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\Edge\pan_anoNIRv_edge.pdf"
 
     main(dfs=dfs, fit_dfs=fit_dfs, grid=grid, plot_setting=plot_setting, outpath=outpath)

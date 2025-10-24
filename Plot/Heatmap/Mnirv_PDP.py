@@ -16,6 +16,7 @@ import matplotlib.ticker as ticker
 import matplotlib.colors as mcolors
 import seaborn as sns
 
+import GlobVars as gv
 import Attribution.LcoRF as lcorf
 
 LABEL_SIZE = 10
@@ -51,17 +52,26 @@ def main(model, raw_df:pd.DataFrame, X:pd.DataFrame, features:list, grid:tuple, 
 
             # Plot.
             if j == 1:
+                ix = X.columns.get_loc(xcol)   # 整数列索引
+                iy = X.columns.get_loc(ycol)
+                n_grid = 50
                 disp = PartialDependenceDisplay.from_estimator(
-                    model, X, features=[[xcol, ycol]], kind="average", grid_resolution=50,
+                    model, X, features=[[xcol, ycol]], kind="average",
+                    # percentiles=(0, 1), grid_resolution=50,
+                    custom_values = {
+                        ix: np.linspace(xlim[0], xlim[1], n_grid),
+                        iy: np.linspace(ylim[0], ylim[1], n_grid)
+                    },
                     ax=ax, contour_kw={'cmap': cmap, 'norm': norm,},
                 )
                 actual_ax = disp.axes_[0, 0]
                 actual_ax.set_xlabel(xlabel)
                 actual_ax.set_ylabel(ylabel)
-                # Remove data distribution in xaxis.
-                actual_ax.tick_params(which='minor', bottom=False, left=False)
-                actual_ax.set_xlim(xlim)
-                actual_ax.set_ylim(ylim)
+                # # Remove data distribution in xaxis.
+                # actual_ax.tick_params(which='minor', bottom=False, left=False)
+                # actual_ax.set_xlim(xlim)
+                # actual_ax.set_ylim(ylim)
+                # actual_ax.yaxis.set_/major_locator(ticker.MaxNLocator(integer=True, nbins=3))
 
             else:
                 sc = ax.scatter(
@@ -70,7 +80,7 @@ def main(model, raw_df:pd.DataFrame, X:pd.DataFrame, features:list, grid:tuple, 
                 )
             
                 ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=4))
-                ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=3))
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=4))
                 ax.minorticks_off()
                 ax.set_xlim(xlim)
                 ax.set_ylim(ylim)
@@ -90,14 +100,15 @@ def main(model, raw_df:pd.DataFrame, X:pd.DataFrame, features:list, grid:tuple, 
 if __name__ == "__main__":
     # Train the model.
     xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
-            'SCC_mean', 'sand_mean_mean', 'nitrogen_mean_mean',
+            'SCC_mean', 'sand_mean_mean', 'histMCWD_mean',
             'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
-            'vpd_mean', 'total_precipitation_sum_mean', 'temperature_2m_mean',
+            'vpd_mean', 'gpm_total_precipitation_sum_mean', 'temperature_2m_mean',
             ]
     ycol = 'nirv_magnitude'
 
-    path = r"F:\Research\AMFEdge\Model\Amazon_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_GLEAM_Edge_Attribution.csv"
     raw_df = pd.read_csv(path)
+    # raw_df = raw_df[raw_df['nirv_magnitude'] > 0]
     df = raw_df.dropna(subset=xcols+[ycol])
     df['MCWD_mean'] = df['MCWD_mean']*-1
     df['nirv_scale'] = df['nirv_scale']/1000
@@ -116,11 +127,11 @@ if __name__ == "__main__":
 
     # Plot
     grid = (1,2)
-    features = [('HAND_mean', 'MCWD_mean', 'nirv_magnitude', 'nirv_scale'),]*2
+    features = [('HAND_mean', 'MCWD_mean','nirv_magnitude', 'nirv_scale'),]*2
     cmap1 = sns.color_palette(palette='RdBu_r', as_cmap=True)
-    levels = np.arange(-6, 7, 1)
+    levels = np.arange(-8, 9, 1)
     norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
-    norm2 = mcolors.BoundaryNorm(boundaries=np.arange(-4, 5, 1), ncolors=cmap1.N)
+    norm2 = mcolors.BoundaryNorm(boundaries=np.arange(-8, 9, 1), ncolors=cmap1.N)
     cmaps = [cmap1, cmap1]
     norms = [norm1, norm2]
 
@@ -128,8 +139,8 @@ if __name__ == "__main__":
         'titles': ['Observed', 'Modelled'],
         'xlabels': ['HAND (m)']*2,
         'ylabels': ['MCWD (mm)']*2,
-        'xlims': [[0, 32], [2, 40]],
-        'ylims': [[0, 400], [55, 349]],
+        'xlims': [[0, 40], [3, 40]],
+        'ylims': [[0, 800], [0, 800]],
         'cmaps': cmaps,'norms': norms, 'levels': [levels]*2
     }
     outpath = r'E:\Thesis\AMFEdge\Figures\Cause\Mnirv_HAND&MCWD.pdf'

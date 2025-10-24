@@ -87,9 +87,9 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
         fig.savefig(outpath, dpi=600)
 
 if __name__ == "__main__":
-    s2_path = r"F:\Research\AMFEdge\Edge\Amazon_UndistEdge_Effect_2023.csv"
+    s2_path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_Effect_2023.csv"
     s2_df = pd.read_csv(s2_path)
-    mod_path = r"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_UndistEdge_2023_diff.csv"
+    mod_path = r"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_Edge_2023_diff.csv"
     mod_df = pd.read_csv(mod_path)
     merge_df = pd.merge(s2_df, mod_df, on='Id', suffixes=('_s2', '_mod'))
     dst_df1 = merge_df.loc[
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
     cmaps = [cmap2, cmap2]
     norms = [norm2, norm2]
-    xlabels = [r'Sentinel-2 $M_{\nabla \mathrm{NIRv}}$ (%)', r'Sentinel-2 $M_{\nabla \mathrm{NDWI}}$ (%)']
-    ylabels = [r'MODIS $M_{\nabla \mathrm{NIRv}}$ (%)', r'MODIS $M_{\nabla \mathrm{NDWI}}$ (%)']
+    xlabels = [r'Sentinel-2 $M_{\Delta \mathrm{NIRv}}$ (%)', r'Sentinel-2 $M_{\Delta \mathrm{NDWI}}$ (%)']
+    ylabels = [r'MODIS $M_{\Delta \mathrm{NIRv}}$ (%)', r'MODIS $M_{\Delta \mathrm{NDWI}}$ (%)']
     xlims = [(-10, 11), (-10, 15)]
     ylims = [(-8, 10), (-8, 10)]
     extend = ['both', 'max']

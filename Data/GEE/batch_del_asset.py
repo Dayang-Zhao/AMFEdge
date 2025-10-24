@@ -25,6 +25,16 @@ import numpy as np
 #     parent = f"projects/forestedge-432402/assets/AMFUndistDegdEdge2023/Edge{dist}"
 #     id_start_with = f"projects/forestedge-432402/assets/AMFUndistDegdEdge2023/Edge{dist}/UndistDegdEdge{dist}"
 #     batch_del_asset(parent, id_start_with)
-parent = f"projects/forestedge-432402/assets/CMIP6/SSP5_85"
-id_start_with = f"projects/forestedge-432402/assets/CMIP6/SSP5_85"
+parent = f"projects/forestedge-432402/assets/S2/AmzS2AnoVI_GLEAM"
+id_start_with = f"projects/forestedge-432402/assets/S2/AmzS2AnoVI_GLEAM"
 batch_del_asset(parent, id_start_with)
+# models = ['mri_esm2_0', 'cnrm_cm6_1_hr', 'cesm2', 'ukesm1_0_ll',
+#           'noresm2_mm', 'miroc6', 'taiesm1',
+#           'kace_1_0_g', 'access_cm2', 'cmcc_cm2_sr5']
+# ids = ['temperature_2m_ano', 'WD_ano', 'DL', 'DS',
+#        'vpd_ano', 'total_precipitation_sum_ano', 
+#        'surface_solar_radiation_downwards_sum_ano', 'total_evaporation_sum_ano',
+#        'vpd_stdAno', 'total_precipitation_sum_stdAno', 'surface_solar_radiation_downwards_sum_stdAno', 'total_evaporation_sum_stdAno']
+# for model in models:
+#     for id in ids:
+#         batch_del_asset(f'{parent}/{model}', f'{parent}/{model}/{id}')

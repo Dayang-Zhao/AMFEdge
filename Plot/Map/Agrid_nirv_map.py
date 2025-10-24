@@ -79,9 +79,14 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    csv_path = r"F:\Research\AMFEdge\Edge\Amazon_UndistEdge_Effect_2023.csv"
+    csv_path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_Effect_2023.csv"
+    # csv_path = r"F:\Research\AMFEdge\EdgeVI\VI_Amazon_UndistEdge_Effect_DrySeason.csv"
     df = pd.read_csv(csv_path)
     df['nirv_scale'] = df['nirv_scale']/1000
+    df = df[df['nirv_scale'] > 6]
+    ne_df = df[df['Id'].isin(gv.NEGRID_IDS)]
+    sw_df = df[df['Id'].isin(gv.SWGRID_IDS)]
+               
     # df = df[(df['nirv_scale_period']<=6000) & (df['nirv_scale_onset']<=6000)]
     # df['nirv_scale_diff'] = df['nirv_scale_diff']/1000
 
@@ -98,7 +103,7 @@ if __name__ == "__main__":
     norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
 
     cmap2 = sns.color_palette("RdBu_r", as_cmap=True)
-    levels = np.arange(-6, 7, 1)
+    levels = np.arange(-8, 8.1, 1)
     # levels = np.arange(-4, 5, 1)
     # cmap2.set_over("#fc0202")
     # cmap2.set_under("#fc0202")
@@ -106,7 +111,7 @@ if __name__ == "__main__":
     cmaps = [cmap2, cmap1]
     norms = [norm2, norm1]
     extend = ['both', 'max']
-    titles = [r'$M_{\nabla \mathrm{NIRv}}$ (%)', r'$S_{\nabla \mathrm{NIRv}}$ (km)']
+    titles = [r'$M_{\Delta \mathrm{NIRv}}$ (%)', r'$S_{\Delta \mathrm{NIRv}}$ (km)']
 
     outpath = r"E:\Thesis\AMFEdge\Figures\Edge\NIRv_edge_map.pdf"
     plot_setting = {'cmaps': cmaps, 'norms': norms, 'titles': titles, 'extends': extend}

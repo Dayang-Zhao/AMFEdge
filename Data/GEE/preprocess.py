@@ -14,18 +14,18 @@ import Data.clip_data as cld
 import GlobVars
 
 # ------------------ S2AnoVI ------------------
-path = r"F:\Research\AMFEdge\VI\Amazon_2023_S2AnoVI_01deg_v2.tif"
-ds = cd.tif2ds(path)
-ds = ds.rio.set_spatial_dims(x_dim='lon', y_dim='lat')\
-    .rio.write_crs("EPSG:4326")
-cds = cld.mask_ds_by_shp(ds=ds, shp=gpd.read_file(GlobVars.AMAZON_PATH))
-# cds = cds.interp_like(GlobVars.STD_DA, method='nearest')
-cds = cds.expand_dims({'time': [pd.to_datetime('2023-05-01')]})
+# path = r"F:\Research\AMFEdge\VI\Amazon_intactForest_2023_S2AnoVI_01deg.tif"
+# ds = cd.tif2ds(path)
+# ds = ds.rio.set_spatial_dims(x_dim='lon', y_dim='lat')\
+#     .rio.write_crs("EPSG:4326")
+# cds = cld.mask_ds_by_shp(ds=ds, shp=gpd.read_file(GlobVars.AMAZON_PATH))
+# # cds = cds.interp_like(GlobVars.STD_DA, method='nearest')
+# cds = cds.expand_dims({'time': [pd.to_datetime('2023-05-01')]})
 
-outpath = r"F:\Research\AMFEdge\VI\Amazon_2023_S2AnoVI_01deg_v2.nc"
-nvars = list(cds.data_vars)
-ecoding = dict(zip(nvars, [{"zlib": True, "complevel": 9}]*len(nvars)))
-cds.to_netcdf(path=outpath, encoding=ecoding, engine='netcdf4')
+# outpath = r"F:\Research\AMFEdge\VI\Amazon_intactForest_2023_S2AnoVI_01deg.nc"
+# nvars = list(cds.data_vars)
+# ecoding = dict(zip(nvars, [{"zlib": True, "complevel": 9}]*len(nvars)))
+# cds.to_netcdf(path=outpath, encoding=ecoding, engine='netcdf4')
 
 # ------------------ S2AnoVI 100m with multiple tifs ------------------
 # root_dir = r"F:\Research\AMFEdge\VI\Amazon_S2AnoVI_100m"
