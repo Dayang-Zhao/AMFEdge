@@ -1,5 +1,5 @@
 import xarray as xr
-# import osgeo
+import osgeo
 import rioxarray
 import geopandas as gpd
 

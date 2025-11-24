@@ -40,7 +40,7 @@ if __name__ == '__main__':
     import os
     import glob
 
-    root_dir = r"F:\Research\AMFEdge\EdgeAge\sumEdge"
+    root_dir = r"F:\Research\AMFEdge\EdgeAge\metaData"
     edge_type = 'sum'
     pre_fname = f'anoVI_Amazon_{edge_type}UndistEdge_2023_y'
     paths = glob.glob(pre_fname+'*'+'.csv', root_dir=root_dir)
@@ -67,5 +67,5 @@ if __name__ == '__main__':
     # outpath = r"F:\Research\AMFEdge\EdgeAge\sumEdge\anoVI_Amazon_sumUndistEdge_2023_age.xlsx"
     # with pd.ExcelWriter(outpath, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
     #     df2.to_excel(writer, sheet_name=edge_type, index=False)
-    outpath = r"F:\Research\AMFEdge\EdgeAge\sumEdge\anoVI_Amazon_sumUndistEdge_2023_age.csv"
+    outpath = r"F:\Research\AMFEdge\EdgeAge\anoVI_Amazon_sumUndistEdge_2023_age.csv"
     df2.to_csv(outpath, index=False)

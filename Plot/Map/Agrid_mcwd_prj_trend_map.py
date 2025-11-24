@@ -26,6 +26,14 @@ CRS = ccrs.PlateCarree()
 # EXTENT = [-80, -44, -21, 10]
 EXTENT = [-81.5, -44, -22, 12.5]
 
+def remove_outliers_iqr(series):
+    q1 = series.quantile(0.25)
+    q3 = series.quantile(0.75)
+    iqr = q3 - q1
+    lower = q1 - 1.5 * iqr
+    upper = q3 + 1.5 * iqr
+    return series[(series >= lower) & (series <= upper)]
+
 def cm2inch(value):
     return value/2.54
 
@@ -98,10 +106,11 @@ if __name__ == "__main__":
     # Read data.
     scenarios = ['SSP1_26', 'SSP2_45', 'SSP5_85']
     gdf = gpd.read_file(gv.GRID_PATH)
-    trend_path = r"F:\Research\AMFEdge\CMIP6\Predict\QDM\pMCWD_Edge_trend.csv"
+    trend_path = r"F:\Research\AMFEdge\CMIP6\Predict\MCWD_trend_V3.csv"
     df = pd.read_csv(trend_path)
-    df = df.dropna(subset=['slope'])
+    df = df.dropna(subset=['slope']).drop(columns=['model'])
     df['slope'] = df['slope']*10
+    df = df.groupby(['Id', 'scenario']).mean().reset_index() 
 
     dfs = []
     for scenario in scenarios:
@@ -116,7 +125,7 @@ if __name__ == "__main__":
 
     # Plot setting.
     cmap2 = sns.color_palette("RdBu_r", as_cmap=True)
-    levels = np.arange(-4, 4.01, 0.5)
+    levels = np.arange(-2,2.01, 0.5)
     # levels = np.arange(-16, 17, 4)
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
     cmaps = [cmap2]*3

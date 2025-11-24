@@ -85,10 +85,10 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     monte_carlo_path = r"F:\Research\AMFEdge\EdgeVI\NIRvLossFrac_Monte_Amazon_Edge_2023.csv"
     monte_carlo_df = pd.read_csv(monte_carlo_path)
-    edge_frac = monte_carlo_df['edge_frac'].mean()*100
-    int_frac = monte_carlo_df['int_frac'].mean()*100
-    edge_frac_std = monte_carlo_df['edge_frac'].std()*100
-    int_frac_std = monte_carlo_df['int_frac'].std()*100
+    edge_frac = monte_carlo_df['edge_net_loss_frac'].mean()*100
+    int_frac = monte_carlo_df['int_net_loss_frac'].mean()*100
+    edge_frac_std = monte_carlo_df['edge_net_loss_frac'].std()*100
+    int_frac_std = monte_carlo_df['int_net_loss_frac'].std()*100
 
     plt_df = pd.DataFrame({'Feature': ['Edge', 'Interior'],'Contribution': [edge_frac, int_frac],
                            'Contribution_std': [edge_frac_std, int_frac_std]})

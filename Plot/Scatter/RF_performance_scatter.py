@@ -22,11 +22,13 @@ import matplotlib.ticker as ticker
 plt.ion()
 import GlobVars as gv
 
-xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
-            'SCC_mean', 'sand_mean_mean', 
-            'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
-            'vpd_mean', 'total_precipitation_sum_mean', 'temperature_2m_mean',
-            ]
+xcols = [
+    'MCWD_mean', 'histMCWD_mean','vpd_mean', 'total_precipitation_sum_mean',
+    'temperature_2m_mean', 'surface_solar_radiation_downwards_sum_mean', 
+    'rh98_scale', 'rh98_magnitude', 
+    'HAND_mean',
+    'SCC_mean', 'sand_mean_mean', 
+    ]
 LABEL_SIZE = 10
 font = {'family' : 'Arial',
         'weight' : 'normal',
@@ -67,7 +69,7 @@ def main(datas:list, grid:tuple, plot_setting:dict, outpath:str):
             ax.set_ylim(ylim)
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
-            ax.text(0.05, 0.8, f'$R^2$ = {r2:.2f}\nMSE = {mse**0.5:.3f}',
+            ax.text(0.05, 0.8, f'$R^2$ = {r2:.2f}\nRMSE = {mse**0.5:.2f}',
                     transform=ax.transAxes, fontsize=LABEL_SIZE+2)
     
     fig.subplots_adjust(bottom=0.15, top=0.9, left=0.1, right=0.98, hspace=0, wspace=0.25)
@@ -80,11 +82,14 @@ if __name__ == "__main__":
     path = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
     df = pd.read_csv(path)
     df['nirv_scale'] = df['nirv_scale']/1000
-    df = df[(df['nirv_scale'] <= 6)]
+    df = df[df['anoMCWD_mean']< -0.5]
+    df2 = df[(df['nirv_scale'] <= 6)]
     ycols = ['nirv_magnitude', 'nirv_scale']
-    dst_df = df[xcols+ycols].dropna(axis=0)
+    dst_df = df2[xcols+ycols].dropna(axis=0)
 
     datas = []
+    pred_df = pd.DataFrame(columns=['Id']+ycols)
+    pred_df['Id'] = df['Id']
     for ycol in ycols:
         X = dst_df[xcols].values
         y = dst_df[ycol].values
@@ -92,15 +97,16 @@ if __name__ == "__main__":
         X = dst_df[xcols].values
         y = dst_df[ycol].values
 
-        model = RandomForestRegressor(n_estimators=50, max_depth=5, criterion='squared_error',
-                                    min_samples_split=2, min_samples_leaf=2, random_state=42)
         model = lcorf.LcoRF()
         model.fit(X, y)
         # Predict
         y_pred = model.predict(X)
+        pred_df[ycol] = model.predict(df[xcols].values)
         r2 = r2_score(y, y_pred)
         mse = mean_squared_error(y, y_pred)
         datas.append((y, y_pred, r2, mse))
+    # Export as csv
+    pred_df.to_csv(r"F:\Research\AMFEdge\Model\anoVI_Amazon_Edge_Effect_2023_pred.csv", index=False)
 
     # Plot setting
     plot_setting = {

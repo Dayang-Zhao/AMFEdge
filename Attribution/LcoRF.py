@@ -1,4 +1,8 @@
-"""Random Forest + Linear correction"""
+"""Random Forest + Linear correction
+The first model is for cross-validation
+The second model is for SHAP and PFI
+These two models have the same structure, but conflicts because of sklearn's BaseEstimator requirement.
+"""
 import pandas as pd
 
 from scipy.stats import linregress
@@ -11,8 +15,46 @@ from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 plt.ion()
 
-class LcoRF:
-    def __init__(self, n_estimators=300, max_depth=3, min_samples_split=2, 
+# class LcoRF(BaseEstimator, RegressorMixin):
+#     def __init__(self, n_estimators=300, max_depth=5, min_samples_split=2, 
+#                  min_samples_leaf=2, random_state=42):
+#         self.n_estimators = n_estimators
+#         self.max_depth = max_depth
+#         self.min_samples_split = min_samples_split
+#         self.min_samples_leaf = min_samples_leaf
+#         self.random_state = random_state
+#         self.model_ = RandomForestRegressor(
+#             n_estimators=self.n_estimators,
+#             max_depth=self.max_depth,
+#             min_samples_split=self.min_samples_split,
+#             min_samples_leaf=self.min_samples_leaf,
+#             random_state=self.random_state
+#         )
+
+#     def fit(self, X, y):
+#         # 训练 RandomForest 模型
+#         self.model_.fit(X, y)
+
+#         # 线性修正
+#         RF_y_pred = self.model_.predict(X)
+#         linear_reg = linregress(RF_y_pred, y)
+#         self.slope_ = linear_reg.slope
+#         self.intercept_ = linear_reg.intercept
+
+#         self.is_fitted_ = True
+#         return self
+
+#     def predict(self, X):
+#         check_is_fitted(self, "is_fitted_")
+#         RF_y_pred = self.model_.predict(X)
+#         return RF_y_pred * self.slope_ + self.intercept_
+
+#     def score(self, X, y):
+#         y_pred = self.predict(X)
+#         return r2_score(y, y_pred)
+
+class LcoRF():
+    def __init__(self, n_estimators=300, max_depth=4, min_samples_split=2, 
                  min_samples_leaf=2):
         self.model = RandomForestRegressor(
             n_estimators=n_estimators, max_depth=max_depth,
@@ -39,18 +81,18 @@ class LcoRF:
         y_pred = self.predict(X)
         return r2_score(y, y_pred)
     
-def grid_search(model, X, y, cv=5):
-    param_grid = {
-        'n_estimators': range(10, 41),     # 树的数量
-        'max_depth': range(2,6),      # 最大深度
-        'min_samples_split': range(2,6),     # 最小划分样本数
-        'min_samples_leaf': range(1,6),       # 叶子节点最小样本数
-    }
+# def grid_search(model, X, y, cv=5):
+#     param_grid = {
+#         'n_estimators': range(10, 41),     # 树的数量
+#         'max_depth': range(2,6),      # 最大深度
+#         'min_samples_split': range(2,6),     # 最小划分样本数
+#         'min_samples_leaf': range(1,6),       # 叶子节点最小样本数
+#     }
 
-    grid_search = GridSearchCV(model, param_grid, cv=cv, n_jobs=-1, scoring='r2')
-    grid_search.fit(X, y)
+#     grid_search = GridSearchCV(model, param_grid, cv=cv, n_jobs=-1, scoring='r2')
+#     grid_search.fit(X, y)
   
-    return grid_search.best_params_, grid_search.best_score_
+#     return grid_search.best_params_, grid_search.best_score_
 
 if __name__ == '__main__':
     xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 

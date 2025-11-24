@@ -44,6 +44,18 @@ def cal_total_frac(df):
 
     return outdf
 
+def remove_outliers_iqr(df, columns):
+    filtered = df.copy()
+    for col in columns:
+        Q1 = filtered[col].quantile(0.25)
+        Q3 = filtered[col].quantile(0.75)
+        IQR = Q3 - Q1
+        filtered = filtered[
+            (filtered[col] >= Q1 - 1.5 * IQR) &
+            (filtered[col] <= Q3 + 1.5 * IQR)
+        ]
+    return filtered
+
 def monte_carlo_R(df, nmc=5000, random_state=None):
     df = df.reset_index(drop=True)
     df = df.dropna(subset=["rh98_scale", "NIRv_count", "NIRv_mean_ano", "NIRv_mean_raw"])
@@ -67,6 +79,8 @@ def monte_carlo_R(df, nmc=5000, random_state=None):
     nirv_count = df["NIRv_count"].values
     rh98_scale = df["rh98_scale"].values
     dist = df["Dist"].values
+    nirv_raw = df["NIRv_mean_raw"].values
+    nirv_ano = df["NIRv_mean_ano"].values
 
     # mask：edge 和 interior
     edge_mask = (dist <= rh98_scale) & (dist != -1)
@@ -85,16 +99,19 @@ def monte_carlo_R(df, nmc=5000, random_state=None):
     neg_int_count_frac = neg_int_count / total_neg_count
 
     # 计算每次模拟的gross loss
-    pos_ano = np.where(nirv_ano_samples>0, nirv_ano_samples, 0)/100
-    neg_ano = np.where((nirv_ano_samples<0)&(nirv_ano_samples > -100), nirv_ano_samples, 0)/100
+    total_raw = (nirv_raw_samples * nirv_count).sum(axis=1)
+    pos_mask = nirv_ano > 0
+    neg_mask = nirv_ano < 0
+    pos_ano = np.where(pos_mask, nirv_ano_samples, 0)/100
+    neg_ano = np.where(neg_mask, nirv_ano_samples, 0)/100
     pos_edge_gain = (pos_ano * nirv_raw_samples * nirv_count)[:, edge_mask].sum(axis=1)
     pos_int_gain  = (pos_ano * nirv_raw_samples * nirv_count)[:, int_mask].sum(axis=1)
     neg_edge_gain = (neg_ano * nirv_raw_samples * nirv_count)[:, edge_mask].sum(axis=1)
     neg_int_gain  = (neg_ano * nirv_raw_samples * nirv_count)[:, int_mask].sum(axis=1)
     pos_gain = pos_edge_gain + pos_int_gain
     neg_gain = neg_edge_gain + neg_int_gain
-    pos_gain_frac = pos_gain/(nirv_raw_samples * nirv_count).sum(axis=1)
-    neg_gain_frac = neg_gain/(nirv_raw_samples * nirv_count).sum(axis=1)
+    pos_gain_frac = pos_gain/total_raw
+    neg_gain_frac = neg_gain/total_raw
 
     pos_edge_gain_frac = pos_edge_gain / pos_gain
     neg_edge_gain_frac = neg_edge_gain / neg_gain
@@ -113,8 +130,8 @@ def monte_carlo_R(df, nmc=5000, random_state=None):
         "num": np.arange(nmc),
         "pos_gain_frac": pos_gain_frac,
         "neg_gain_frac": neg_gain_frac,
-        'edge_loss_frac': edge_loss_frac,
-        'int_loss_frac': int_loss_frac,
+        'edge_net_loss_frac': edge_loss_frac,
+        'int_net_loss_frac': int_loss_frac,
         "pos_edge_gain_frac": pos_edge_gain_frac,
         "neg_edge_gain_frac": neg_edge_gain_frac,
         "pos_int_gain_frac": pos_int_gain_frac,
@@ -125,7 +142,10 @@ def monte_carlo_R(df, nmc=5000, random_state=None):
         "neg_int_count_frac": neg_int_count_frac
     })
 
-    # outdf = outdf[(outdf['edge_loss_frac'] > 0) & (outdf['edge_loss_frac'] < 1) & (outdf['int_loss_frac'] > 0) & (outdf['int_loss_frac'] < 1)].reset_index(drop=True)
+    # Remove outliers
+    outdf = outdf[(outdf['edge_net_loss_frac'] > 0) & (outdf['edge_net_loss_frac'] < 1) 
+                  & (outdf['int_net_loss_frac'] > 0) & (outdf['int_net_loss_frac'] < 1)].reset_index(drop=True)
+
     return outdf
 
 
@@ -206,14 +226,14 @@ if __name__ == "__main__":
     merged_df = anoVI_df[['Id', 'Dist', 'NIRv_mean', 'NIRv_stdDev']].merge(VI_df[['Id', 'Dist', 'NIRv_mean', 'NIRv_stdDev']], on=['Id', 'Dist'], suffixes=('_ano', '_raw'))
     merged_df = merged_df.merge(num_df[['Id', 'Dist', 'NIRv_count']], on=['Id', 'Dist'])
     merged_df = merged_df.merge(rh_df[['Id', 'rh98_scale']], on='Id')
-    merged_df = merged_df.dropna(subset=['rh98_scale'], axis=0)
+    merged_df = merged_df.dropna(subset=['rh98_scale', 'NIRv_mean_ano', 'NIRv_mean_raw', 'NIRv_count'], axis=0)
     # merged_df = merged_df[merged_df['NIRv_mean_ano'] < 0]
     # merged_df = merged_df[merged_df['Id'].isin(gv.SWGRID_IDS)]
 
-    outdf = cal_nirv_loss(merged_df)
-    # outdf = monte_carlo_R(merged_df, nmc=10000, random_state=42)
+    # outdf = cal_nirv_loss(merged_df)
+    outdf = monte_carlo_R(merged_df, nmc=10000, random_state=42)
 
-    outpath = r"F:\Research\AMFEdge\EdgeVI\NIRvLoss_Amazon_Edge_2023.csv"
-    # outpath = r"F:\Research\AMFEdge\EdgeVI\NIRvLossFrac_Monte_Amazon_Edge_2023.csv"
+    # outpath = r"F:\Research\AMFEdge\EdgeVI\NIRvLoss_Amazon_Edge_2023.csv"
+    outpath = r"F:\Research\AMFEdge\EdgeVI\NIRvLossFrac_Monte_Amazon_Edge_2023.csv"
     outdf.to_csv(outpath, index=False)
     print(outdf)

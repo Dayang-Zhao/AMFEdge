@@ -83,9 +83,6 @@ def main(model, raw_df:pd.DataFrame, xcols:list, features:list, grid:tuple, plot
                 actual_ax.spines['right'].set_visible(False)
                 legend = actual_ax.legend(loc='upper left', frameon=False, fontsize=LABEL_SIZE)
             else:
-
-                pos_df = remove_outliers_iqr(pos_df, [xcol, ycol])
-                neg_df = remove_outliers_iqr(neg_df, [xcol, ycol])
                 raw_df = pd.concat([pos_df, neg_df])
                 sc = ax.scatter(
                     raw_df[xcol], raw_df[ycol], c=raw_df[ccol], s=40,

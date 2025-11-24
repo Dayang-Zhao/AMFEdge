@@ -78,15 +78,16 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    csv_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023.csv"
+    csv_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023_1deg.csv"
     df = pd.read_csv(csv_path)
-    # df = df[(df['rh98_scale']<4000)]
-    df['rh50_scale'] = df['rh50_scale']/1000
+    # df = df[df['Dist']==3000]
+    df['rh98_scale'] = df['rh98_scale']/1000
 
     # Merge data.
     gdf_merged = gdf.merge(df, on="Id", how="left")
     dfs = [gdf_merged]*2
-    cols = ['rh50_magnitude', 'rh50_scale']
+    # cols = ['rh50_magnitude', 'rh50_scale']
+    cols = ['rh98_magnitude',  'rh98_scale']
     grid = (1, 2)
 
     # Plot setting.
@@ -97,16 +98,16 @@ if __name__ == "__main__":
     norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
 
     cmap2 = sns.diverging_palette(145, 300, s=60, as_cmap=True)
-    # levels = np.arange(40, 101, 10)
+    # levels = np.arange(10, 31, 2)
+    # levels = np.arange(20, 36, 2)
     levels = np.arange(2, 11, 1)
-    # cmap2.set_over("#fc0202")
-    # cmap2.set_under("#fc0202")
+
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
     cmaps = [cmap2, cmap1]
     norms = [norm2, norm1]
     extend = ['both', 'max']
     titles = ['$M_{\mathrm{RH98}}$ (m)', '$S_{\mathrm{RH98}}$ (km)']
 
-    outpath = r"E:\Thesis\AMFEdge\Figures\EdgeRH\RH98_edge_map.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\EdgeRH\RH98_edge_1deg_map.pdf"
     plot_setting = {'cmaps': cmaps, 'norms': norms, 'titles': titles, 'extends': extend}
     main(dfs=dfs, grid=grid, cols=cols, plot_setting=plot_setting, outpath=outpath)

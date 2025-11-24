@@ -27,7 +27,7 @@ def fit(xdata, ydata):
                 check_finite=False, nan_policy='omit')
         return popt
     except RuntimeError:
-        return False
+        return np.array([False])
 
 # Calculate fitting performance
 def cal_fit_performance(xdata, ydata, popt):
@@ -129,12 +129,12 @@ def main(df, ids):
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_2023.csv"
+    path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_2023_1deg.csv"
     df = pd.read_csv(path)
     dst_df = df.loc[df['Dist']<=DIST_MAX]
     dst_ids = df['Id'].unique()
     # dst_ids = [166, 167]
 
     outdf = main(dst_df, ids=dst_ids)
-    outpath = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023.csv"
+    outpath = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023_1deg.csv"
     outdf.rename(columns={'ID':'Id'}).to_csv(outpath, index=False)

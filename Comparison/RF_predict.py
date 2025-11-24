@@ -62,9 +62,16 @@ if __name__ == "__main__":
     r2 = model.score(X, y)
     print(f"R2: {r2:.3f}")
 
-    outdf = main(model, years=years)
-    outdf = outdf.merge(BG_DF, on='Id', suffixes=('_pred', '_true'))
-    outdf = outdf.dropna(subset=[ycol+'_pred', ycol+'_true'])
+    # outdf = main(model, years=years)
+    # outdf = outdf.merge(BG_DF, on='Id', suffixes=('_pred', '_true'), how='outer')
+    # outdf = outdf.dropna(subset=[ycol+'_pred', ycol+'_true'])
 
-    outpath = r"F:\Research\AMFEdge\Comparison\NIRv_Predictions_PastDrought.csv"
+    # Predict raw data.
+    raw_df = BG_DF.dropna(subset=['Id'] + dy_xcols + static_xcols).copy()
+    X = raw_df[static_xcols + dy_xcols]
+    y = model.predict(X)
+    outdf = raw_df.copy()[['Id', ycol]]
+    outdf[ycol+'_pred'] = y
+
+    outpath = r"F:\Research\AMFEdge\Model\Mnirv_pred_2023.csv"
     outdf.to_csv(outpath, index=False)

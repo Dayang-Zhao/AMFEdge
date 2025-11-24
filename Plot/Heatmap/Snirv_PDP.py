@@ -118,7 +118,7 @@ if __name__ == "__main__":
             'vpd_mean', 'total_precipitation_sum_mean','temperature_2m_mean']
     ycol = 'nirv_scale'
 
-    path = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_undistEdge_Attribution.csv"
     raw_df = pd.read_csv(path)
     df = raw_df.dropna(subset=xcols+[ycol])
     df['MCWD_mean'] = df['MCWD_mean']*-1

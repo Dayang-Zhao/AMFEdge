@@ -128,7 +128,7 @@ if __name__ == '__main__':
     
     posdfs, negdfs = [], []
     for scenario in scenarios:
-        df = pd.read_csv(rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}.csv")
+        df = pd.read_csv(rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}_V3.csv")
         # df = remove_outliers_iqr(df, ['nirv_magnitude'])
         # df = df[df['model']=='miroc6']
         # posdf = df[df['Id'].isin(gv.NEGRID_IDS)]

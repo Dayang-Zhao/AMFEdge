@@ -36,7 +36,7 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
         nrows=nrows, ncols=ncols, sharex='col', sharey='row',
         subplot_kw={'projection': CRS, 'frameon':True}
         )
-    fig.set_size_inches(cm2inch(12), cm2inch(13))
+    fig.set_size_inches(cm2inch(14), cm2inch(14))
     title_nums = ['a', 'b', 'c', 'd', 'e', 'f']
 
     for i in range(nrows):
@@ -56,24 +56,41 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
 
             # Plot.
             ax = axes[i, j]
-            im = dst_da.plot(ax=ax, cmap=cmap, add_colorbar=True, vmin=vrange[0], vmax=vrange[1], levels=level,
-                    cbar_kwargs={'label':None,'pad':0.05, 'shrink':0.9, 'aspect':20, 'extend':extend, 'orientation':'horizontal'})
-
-            # Adjust colorbar.
-            cbar = im.colorbar
 
             # Custom colorbar ticklabels
             if i<1:
+                im = dst_da.plot(ax=ax, cmap=cmap, add_colorbar=True, vmin=vrange[0], vmax=vrange[1], levels=level,
+                    cbar_kwargs={'label':None,'pad':0.05, 'shrink':0.9, 'aspect':20, 'extend':extend, 'orientation':'horizontal'})
+                
+                # Adjust colorbar.
                 ticks = np.linspace(vrange[0], vrange[1], level)
+                cbar = im.colorbar
                 cbar.set_ticks(ticks)
                 cbar.set_ticklabels(['Apr', 'Jun', 'Aug', 'Oct', 'Dec', 'Feb$^{+1}$', 'Apr$^{+1}$'],
                                     fontsize=9) 
+            if i==1 and j!=1:
+                im = dst_da.plot(ax=ax, cmap=cmap, add_colorbar=True, vmin=vrange[0], vmax=vrange[1], levels=level,
+                    cbar_kwargs={'label':None,'pad':0.05, 'shrink':0.9, 'aspect':20, 'extend':extend, 'orientation':'horizontal'})
             
             if i==1 and j==1:
+                boundary = [0.5, 1, 1.5, 2.0, 2.5, 3]
+                im = dst_da.plot(
+                    ax=ax, x='lon', y='lat', cmap=cmap, 
+                    norm=matplotlib.colors.BoundaryNorm(boundary, cmap1.N, clip=True),
+                    add_colorbar=True, 
+                    cbar_kwargs={
+                        'pad': 0.02, 'shrink': 0.95,
+                        'aspect': 20, 'extend': 'neither',
+                        'orientation': 'horizontal',
+                        'ticks': boundary,
+                        'label':None,
+                    }
+                )
+                cbar = im.colorbar
                 ticks = np.arange(vrange[0]+0.25, vrange[1]-0.24, 0.5)
                 cbar.set_ticks(ticks)
                 cbar.minorticks_off()
-                cbar.set_ticklabels(['Severe', 'Medium', 'Moderate', 'Mild'], fontsize=9)
+                cbar.set_ticklabels(['Mild', 'Moderate', 'Medium', 'Severe', 'Extreme'], fontsize=9)
 
 
             # Add a basemap (world map)
@@ -93,7 +110,7 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
                 spine.set_visible(False)
 
     # Adjust.
-    fig.subplots_adjust(bottom=0.01, top=0.95, left=0.02, right=0.97, hspace=0.1, wspace=0.05)
+    fig.subplots_adjust(bottom=0.01, top=0.95, left=0.02, right=0.98, hspace=0.1, wspace=0.03)
 
     if outpath is not None:
         fig.savefig(outpath, dpi=600)
@@ -102,15 +119,11 @@ if __name__ == '__main__':
     # Read data
     dst_year = 2023
     # Read data
-    # paths = [r"F:\Research\AMFEdge\Meteo\Processed\Amazon_2023_droughtPeriod.nc",
-    #          r"F:\Research\AMFEdge\Meteo\Processed\Amazon_2023_droughtPeriod.nc",
-    #          r"F:\Research\AMFEdge\Meteo\Processed\Amazon_2023_droughtPeriod.nc",
-    #          ]
-    # ds_array = [xr.open_dataset(path).isel(time=0).drop('spatial_ref').drop('time') for path in paths]
     paths = [r"F:\Research\AMFEdge\Meteo\Meta\Amazon_2023_droughtPeriod.tif",]*3 \
         + [r"F:\Research\AMFEdge\Meteo\Meta\Amazon_2023_droughtSeverity.tif"]
     ds_array = [cd.tif2ds(path).drop('spatial_ref') for path in paths]
-    ds_array[-1] = ds_array[-1].where(ds_array[-1]['anoMCWD']< -0.5).clip(min=-2.5)
+    ds_array[-1] = ds_array[-1].where(ds_array[-1]['anoMCWD']< -0.5)*-1
+    ds_array[-1] = ds_array[-1].clip(max=3)
     dst_vars = ['startMonth', 'endMonth', 'length', 'anoMCWD']
 
     # Plot setting.
@@ -120,13 +133,9 @@ if __name__ == '__main__':
     cmap2 =  mcolors.LinearSegmentedColormap.from_list(
         'truncated', cmap2(np.linspace(0.35, 1, 256))
     ) # Remove light colors
-    cmap3 = sns.color_palette("YlOrBr_r", as_cmap=True)
-    cmap3 =  mcolors.LinearSegmentedColormap.from_list(
-        'truncated', cmap3(np.linspace(0, 0.65, 256))
-    ) # Remove light colors
-    cmaps = [cmap1, cmap1, cmap2, cmap3]
+    cmaps = [cmap1, cmap1, cmap2, cmap2]
     levels = [7, 7, 5, 5]
-    vranges = [(4, 16), (4, 17), (0,8), (-2.5,-0.5)]
+    vranges = [(4, 16), (4, 17), (0,8), (0.5, 3)]
     extend = ['neither', 'neither', 'neither', 'neither']
     titles = ['Start Month', 'End Month', 'Drought Length (months)', 'Drought severity']
     plot_setting = {'cmaps':cmaps, 'vranges':vranges, 'titles':titles, 'levels':levels, 'extend':extend}

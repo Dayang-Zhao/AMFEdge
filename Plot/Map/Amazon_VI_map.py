@@ -22,7 +22,7 @@ font = {'family' : 'Arial',
         'size'   : LABEL_SIZE}
 matplotlib.rc('font', **font)
 CRS = ccrs.PlateCarree()
-EXTENT = [-80, -44, -21, 9]
+EXTENT = [-81.5, -44, -22, 12.5]
 
 def cm2inch(value):
     return value/2.54
@@ -35,7 +35,7 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
         nrows=nrows, ncols=ncols, sharex='col', sharey='row',
         subplot_kw={'projection': CRS, 'frameon':True}
         )
-    fig.set_size_inches(cm2inch(17), cm2inch(13))
+    fig.set_size_inches(cm2inch(17), cm2inch(14))
     title_nums = ['a', 'b', 'c', 'd', 'e', 'f']
 
     for i in range(nrows):
@@ -58,7 +58,7 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
             im = dst_da.plot(ax=ax, x='lon', y='lat', cmap=cmap, add_colorbar=True, vmin=vrange[0], 
                              vmax=vrange[1], levels=level, 
                     cbar_kwargs={'label':None,'pad':0.02, 'shrink':0.9, 'aspect':20, 'extend':extend,
-                                 "orientation": "vertical"})
+                                 "orientation": "horizontal", 'location':'bottom'},)
 
             # Adjust colorbar.
             cbar = im.colorbar
@@ -80,6 +80,10 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
                 shapefile = gpd.read_file(shp_path)
                 shapefile.plot(ax=ax, edgecolor='black', facecolor='none', linewidth=1)
 
+            # Remove frames and ticks
+            for spine in ax.spines.values():
+                spine.set_visible(False)
+
     # Adjust.
     fig.subplots_adjust(bottom=0.01, top=0.97, left=0.01, right=0.98, hspace=0.04, wspace=0.05)
 
@@ -88,16 +92,10 @@ def main(ds_array:list, dst_vars:list, grid:tuple, plot_setting: dict,
 
 if __name__ == '__main__':
     # Read data
-    # paths = [r"F:\Research\AMFEdge\VI\Amazon_2023_HlsAnoVI.tif",
-    #          r"F:\Research\AMFEdge\VI\Amazon_2023_JJA_S2AnoVI.tif",
-    #          r"F:\Research\AMFEdge\VI\Amazon_2023_SON_S2AnoVI.tif",
-    #          r"F:\Research\AMFEdge\VI\Amazon_2023_DJF_S2AnoVI.tif",
-    #          ]
     paths = [r"F:\Research\AMFEdge\VI\Amazon_2023_S2AnoVI.tif",
+             r"F:\Research\AMFEdge\VI\Amazon_2023_HLSAnoVI.tif",
              r"F:\Research\AMFEdge\VI\Amazon_2023_ModAnoVI.tif",
-             r"F:\Research\AMFEdge\VI\Amazon_2023_2024_anoGosif.nc",
-             r"F:\Research\AMFEdge\Meteo\Meta\Amazon_2023_MCWD.tif"
-             ]
+             ] + [r"F:\Research\AMFEdge\Meteo\Meta\Amazon_2023_anoMeteo.tif"]*3
     ds_array = []
     for path in paths:
         if path.endswith('.nc'):
@@ -105,26 +103,28 @@ if __name__ == '__main__':
         else:
             ds = cd.tif2ds(path).drop('spatial_ref')
         ds_array.append(ds)
-    dst_vars = ['NIRv', 'NIRv', 'sif', 'MCWD']
+    dst_vars = ['NIRv', 'NIRv', 'NIRv', 'total_precipitation_sum', 'temperature_2m', 'surface_solar_radiation_downwards_sum']
+    for i in range(0,3):
+        ds_array[i][dst_vars[i]] = ds_array[i][dst_vars[i]]* -1
     
     # Plot setting.
-    grid=(2,2)
-    cmap1 = sns.color_palette("RdBu_r", as_cmap=True)
+    grid=(2,3)
+    cmap1 = sns.color_palette("RdBu", as_cmap=True)
     cmap2 = sns.color_palette("YlOrBr_r", as_cmap=True)
     cmap3 = sns.color_palette("YlOrBr", as_cmap=True)
 
     cmaps = [cmap1]*3 + [cmap2, cmap3, cmap3]
-    vranges = [(-10, 10)]*3 + [(-400, 0)]#[(-80,0), (0,4), (0, 20)]
+    vranges = [(-10, 10)]*3 + [(-80,0), (0,4), (0, 20)]
     levels = [9,9,9, 9,9,9]
     extend = ['both']*3 + ['neither']*3
     titles = ['Sentinel-2 $\Delta $NIRv (%)', 
-              'MODIS $\Delta $NIRv (%)', 'GOSIF $\Delta $SIF (%)', 'MCWD (mm)']
+              'HLS $\Delta $NIRv (%)', 'MODIS $\Delta $NIRv (%)',  '$\Delta P$ (%)', '$\Delta T$ (°C)', '$\Delta$VPD (%)']
     # titles = ['HLS $\Delta $NIRv (%)', 
     #           'Jul-Aug $\Delta $NIRv (%)', 'Sep-Nov $\Delta $NIRv (%)', 'Dec-Feb $\Delta $NIRv (%)']
     plot_setting = {'cmaps':cmaps, 'vranges':vranges, 'titles':titles, 'levels':levels, 'extend':extend}
 
     shp_path = r"F:\Shapefile\Amazon\sum_amazonia_polygons.shp"
-    outpath = r"E:\Thesis\AMFEdge\Figures\Description\Amazon_2023_anoVI.jpg"
+    outpath = r"E:\Thesis\AMFEdge\Figures\Description\Amazon_2023_anoVI&Meteo.jpg"
 
     main(ds_array=ds_array, dst_vars=dst_vars, grid=grid, 
          plot_setting=plot_setting, shp_path=shp_path, outpath=outpath)

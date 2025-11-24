@@ -70,11 +70,11 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
         fig.savefig(outpath, dpi=600)
 
 if __name__ == "__main__":
-    VI_edge_path = r"F:\Research\AMFEdge\Edge\dAnoVI_Amazon_Edge_2023.csv"
+    VI_edge_path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_2023.csv"
     VI_edge_df = pd.read_csv(VI_edge_path)
     VI_edge_df['Dist'] = VI_edge_df['Dist']/1000
-    VI_edge_df['NIRv_diff'] = VI_edge_df['NIRv_diff']*-1
-    VI_popt_path = r"F:\Research\AMFEdge\Edge\dAnoVI_Amazon_Edge_Effect_2023.csv"
+    VI_edge_df['NIRv_mean'] = VI_edge_df['NIRv_mean']*-1
+    VI_popt_path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_Effect_2023.csv"
     VI_popt_df = pd.read_csv(VI_popt_path)
     VI_popt_df['nirv_para1'] = VI_popt_df['nirv_para1']*-1
     VI_popt_df['nirv_para3'] = VI_popt_df['nirv_para3']*-1
@@ -99,18 +99,18 @@ if __name__ == "__main__":
         print(dst_RH_popt)
 
     grid = (2, 2)
-    cols = [('Dist', 'NIRv_diff'), ('Dist', 'rh98_mean')]*2
-    ylabels = [r'$\Delta$NIRv-$\Delta$NIRv$_{interior}$ (%)', 'RH98 (m)']*2
-    titles = ['Good Fit of $\Delta$NIRv', 'Good Fit of RH98',
+    cols = [('Dist', 'NIRv_mean'), ('Dist', 'rh98_mean')]*2
+    ylabels = [r'$\Delta$NIRv', 'RH98 (m)']*2
+    titles = ['$\Delta$NIRv', 'RH98',
               'Bad Fit of $\Delta$NIRv', 'Bad Fit of RH98']
     xlims = [(-0.2,6.2)]*4
-    ylims = [(-1,8.5), (10, 27), (-3,1), (20, 32)]
+    ylims = [(-1,9), (10, 27), (-3,1), (20, 32)]
     plot_setting = {
         'titles': titles,
         'ylabels': ylabels,
         'xlims': xlims,
         'ylims': ylims,
     }
-    outpath = r"E:\Thesis\AMFEdge\Figures\Edge\edge_fitting_exmaple.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\Model\edge_fitting_exmaple.pdf"
 
     main(dfs, grid, cols, plot_setting, outpath)

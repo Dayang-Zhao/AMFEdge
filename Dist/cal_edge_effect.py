@@ -130,12 +130,12 @@ def main(df, ids):
     return outdf
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_GLEAM_Edge_2023.csv"
+    path = r"F:\Research\AMFEdge\Edge1deg\anoVI_Amazon_Edge_Gleam_2023.csv"
     df = pd.read_csv(path)
     dst_df = df.loc[df['Dist']<=DIST_MAX]
     dst_ids = df['Id'].unique()
     # dst_ids = [166, 167]
 
     outdf = main(dst_df, ids=dst_ids)
-    outpath = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_GLEAM_Edge_Effect_2023.csv"
+    outpath = r"F:\Research\AMFEdge\Edge1deg\anoVI_Amazon_Edge_Effect_Gleam_2023.csv"
     outdf.rename(columns={'ID':'Id'}).to_csv(outpath, index=False)

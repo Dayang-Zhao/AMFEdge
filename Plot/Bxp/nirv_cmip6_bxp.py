@@ -34,8 +34,9 @@ scenarios = ['SSP1_26', 'SSP2_45', 'SSP5_85']
 scenarios2 = ['RCP 2.6', 'RCP 4.5', 'RCP 8.5']
 dfs = []
 for scenario in scenarios:
-    path = rf"F:\Research\AMFEdge\CMIP6\Predict\QDM\Mnirv_Edge_pred_{scenario}.csv"
+    path = rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}.csv"
     df = pd.read_csv(path)
+    # df = df[df['year'] >= 2090]
     df['scenario'] = scenario
     dfs.append(df)
 df = pd.concat(dfs, ignore_index=True)
@@ -45,10 +46,10 @@ df["scenario"] = df["scenario"].replace({
     "SSP5_85": "RCP 8.5"
 })
 pos_df, neg_df = df[df['nirv_magnitude']>0], df[df['nirv_magnitude']<=0]
-data = [pos_df, neg_df]
+data = [neg_df, pos_df]
 xcol, ycol = 'scenario', 'nirv_magnitude'
-ylims = [(0,6), (-5,-1)]
-titles = [r'a $M_{\Delta \mathrm{NIRv}}$ > 0', r'b $M_{\Delta \mathrm{NIRv}}$ < 0']
+ylims = [(-5,-1), (0,6)]
+titles = [r'a $M_{\Delta \mathrm{NIRv}}$ < 0', r'b $M_{\Delta \mathrm{NIRv}}$ > 0']
 
 for j in range(ncols):
     ax = axes[j]

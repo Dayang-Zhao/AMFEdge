@@ -9,7 +9,7 @@ plt.ion()
 import matplotlib.ticker as ticker
 import seaborn as sns
 
-VAR = 'fNIRv'
+VAR = 'dNIRv_mean'
 COUNT_COLUMN = VAR+'_count'
 MEAN_COLUMN = VAR+'_mean'
 MEDIAN_COLUMN = VAR+'_median'
@@ -53,39 +53,40 @@ def main(dfs:list, grid:tuple, plot_setting:dict, outpath:str):
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[i,j]
-            df = dfs[i*ncols+j]
+            df = dfs[i*ncols+j].copy()
+            df[VAR+'_mean'] = df[VAR+'_mean']*-1
 
             # Plot setting.
-            xlim = [0, 35]
+            xlim = [0, 30]
             title_num = title_nums[i*ncols+j]
             title = plot_setting['titles'][i*ncols+j]
             # Add text.
             def _add_rp(linear_regression_result):
-                r = linear_regression_result.slope
+                r = linear_regression_result.rvalue
                 p = linear_regression_result.pvalue
                 if p<0.001:
-                    return f'***slope ={r.round(3)}'
+                    return f'***$r$ = {r.round(3)}'
                 elif p<0.01:
-                    return f'**slop$ ={r.round(3)}'
+                    return f'**$r$ = {r.round(3)}'
                 elif p<0.05:
-                    return f'*slope ={r.round(3)}'
+                    return f'*$r$ = {r.round(3)}'
                 else:
-                    return f'slope ={r.round(3)}'
+                    return f'$r$ = {r.round(3)}'
 
             # Plot.
-            ax.errorbar(df['age'], df[VAR+'_mean_grid']*-1,  yerr = df[VAR+'_mstd_grid'],
+            ax.errorbar(df['age'], df[VAR+'_mean'],  yerr = df[VAR+'_std'],
                         fmt='.', markersize=8, color='#ed3e2e', ecolor='#3d98c2', elinewidth=1)
 
-            # Linear regression for the first five years.
-            if i == 1:
-                result = stats.linregress(df['age'][:5], df[VAR+'_mean_grid'][:5])
-                x = np.linspace(xlim[0], xlim[0]+20, 100)
-                y1 = result.intercept + result.slope * x
-                ax.plot(x, y1, color="#D458D4", linewidth=2, linestyle='--', zorder=10)
-                ax.text(0.55, 0.85, _add_rp(result), fontsize=12, color="#D458D4", transform=ax.transAxes)
+            # # Linear regression for the first five years.
+            # if i == 1:
+            #     result = stats.linregress(df['age'][:5], df[VAR+'_mean'][:5])
+            #     x = np.linspace(xlim[0], xlim[0]+20, 100)
+            #     y1 = result.intercept + result.slope * x
+            #     ax.plot(x, y1, color="#D458D4", linewidth=2, linestyle='--', zorder=10)
+            #     ax.text(0.55, 0.85, _add_rp(result), fontsize=12, color="#D458D4", transform=ax.transAxes)
 
             # Linear regression for the entire.
-            result = stats.linregress(df['age'], df[VAR+'_mean_grid']*-1)
+            result = stats.linregress(df['age'], df[VAR+'_mean'])
             x = np.linspace(xlim[0], xlim[1], 100)
             y1 = result.intercept + result.slope * x
             ax.plot(x, y1, color='black', linewidth=1.5, linestyle='--', zorder=10)
@@ -101,7 +102,7 @@ def main(dfs:list, grid:tuple, plot_setting:dict, outpath:str):
             #     ax.legend(loc='best', frameon=False, prop={'size':10}, ncol=1)
                 
             ax.set_xlim(xlim)
-            ax.set_ylabel('$\Delta$NIRv Magnitude(%)')
+            ax.set_ylabel('$M_{\Delta \mathrm{NIRv}}$ (%)')
             ax.set_xlabel('Time since edge creation (yr)')
             # Y ticklabels is integer and their number is less than 6.
             ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=6))
@@ -116,9 +117,13 @@ def main(dfs:list, grid:tuple, plot_setting:dict, outpath:str):
         fig.savefig(outpath, dpi=600)
 
 if __name__ == '__main__':
-    path = r"F:\Research\AMFEdge\EdgeAge\anoVI_panAmazon_dsumUndistEdge_2023_age_sum.csv"
-    edge_types = ['grass', 'crop', 'water', 'nonveg']
-    dfs = [pd.read_csv(path) for edge_type in edge_types]
+    path = r"F:\Research\AMFEdge\EdgeAge\anoVI_Amazon_sumUndistEdge_effect_2023_age.csv"
+    df = pd.read_csv(path)
+    df = df[df['age']<=30]
+    mean_df = df.groupby('age').mean().reset_index()
+    std_df = df.groupby('age').std().reset_index()
+    plot_df = mean_df.merge(std_df, on='age', suffixes=('_mean', '_std'))
+    dfs = [plot_df]*4
 
     # Plot setting.
     titles = ['Grass edge', 'Crop edge', 'Water edge', 'Barren edge']

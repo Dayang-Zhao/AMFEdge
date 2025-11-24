@@ -60,3 +60,10 @@ NIRv_count, NIRv_max, NIRv_mean, NIRv_median, NIRv_skew, NIRv_stdDev, NIRv_sum,
 
 # CMIP6 
 1. 单位转化有问题，所以就直接回归校正，不转化单位了
+2. 以1985-2014年作为hist baseline
+
+# SPEI
+Command line:
+process_climate_indices --index spei --periodicity monthly --netcdf_precip F:/Research/AMFEdge/Meteo/Processed/Amazon_CHIRPS_GLEAM_1981_2024_monthlyPetP.nc --var_name_precip precipitation --netcdf_pet F:/Research/AMFEdge/Meteo/Processed/Amazon_CHIRPS_GLEAM_1981_2024_monthlyPetP.nc --var_name_pet Ep --output_file_base F:/Research/AMFEdge/Meteo/Processed/Amazon_CHIRPS_GLEAM_1985_2024_monthlySPEI --scales 1 3 --calibration_start_year 1985 --calibration_end_year 2019 --multiprocessing all
+
+process_climate_indices --index pet --periodicity monthly --netcdf_temp F:/Research/AMFEdge/Meteo/Processed/Amazon_ERA5_1985_2024_monthlyTP.nc --var_name_temp temperature_2m --output_file_base F:/Research/AMFEdge/Meteo/Processed/Amazon_ERA5_1985_2024_monthlyPET --multiprocessing all_but_one

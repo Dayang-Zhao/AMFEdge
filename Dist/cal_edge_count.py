@@ -22,13 +22,13 @@ def cal_edge_area(num_df:pd.DataFrame, rh_df:pd.DataFrame) -> pd.DataFrame:
 
 if __name__ == '__main__':
     # Read data.
-    num_path = r"F:\Research\AMFEdge\EdgeNum\anoVI_Amazon_Edge_2023.csv"
+    num_path = r"F:\Research\AMFEdge\EdgeNum\anoVI_Amazon_Edge_2023_1deg.csv"
     num_df = pd.read_csv(num_path)
 
-    rh98_path = r"F:\Research\AMFEdge\EdgeRH\Amazon_Edge_Effect_2023.csv"
+    rh98_path = r"F:\Research\AMFEdge\EdgeRH\RH_Amazon_Edge_Effect_2023_1deg.csv"
     rh98_df = pd.read_csv(rh98_path)
 
     area_df = cal_edge_area(num_df, rh98_df)
 
-    outpath = r"F:\Research\AMFEdge\EdgeNum\Area_Amazon_Edge_2023.csv"
+    outpath = r"F:\Research\AMFEdge\EdgeNum\Area_Amazon_Edge_2023_1deg.csv"
     area_df.to_csv(outpath, index=False)

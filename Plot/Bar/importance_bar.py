@@ -36,13 +36,13 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
     title_nums = ['a','b','c', 'd', 'e', 'f']
     nrows, ncols = grid
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
-    fig.set_size_inches(cm2inch(13), cm2inch(10))
+    fig.set_size_inches(cm2inch(15), cm2inch(11))
 
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[j]
             df = dfs[i*ncols+j]
-            xcol, ycol, ecol= cols[i*ncols+j]
+            xcol, ycol, = cols[i*ncols+j]
 
             # Plot setting.
             title_num = title_nums[i*ncols+j]
@@ -56,15 +56,15 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
                                  ["#CC4348", '#299d8f', '#3076CC', '#f4b41a']))
             colors = df['Group'].map(group_colors)
             df.plot.barh(ax=ax, x=xcol, y=ycol,edgecolor=None, color=colors, linewidth=1.5,legend=False)
-            ax.errorbar(
-                x=df[ycol],              # x坐标：数值
-                y=range(len(df)),          # y坐标：条的中心
-                xerr=df[ecol],          # 横向误差
-                fmt='none',                # 不画点，只画误差棒
-                color='black',            # 误差棒颜色
-                capsize=2,                 # 两端小横线长度
-                elinewidth=1.5              # 误差棒线宽
-            )
+            # ax.errorbar(
+            #     x=df[ycol],              # x坐标：数值
+            #     y=range(len(df)),          # y坐标：条的中心
+            #     xerr=df[ecol],          # 横向误差
+            #     fmt='none',                # 不画点，只画误差棒
+            #     color='black',            # 误差棒颜色
+            #     capsize=2,                 # 两端小横线长度
+            #     elinewidth=1.5              # 误差棒线宽
+            # )
             # ax.set_yticks(range(len(df[xcol])), ytick,rotation=0)
             ax.set_xlabel(xlabel, fontsize=LABEL_SIZE)
             ax.set_ylabel(ylabel, fontsize=LABEL_SIZE)
@@ -88,7 +88,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
         fig.savefig(outpath, dpi=600)
 
 if __name__ == "__main__":
-    path = r"F:\Research\AMFEdge\Model\RF_Edge_PFI_importance.xlsx"
+    path = r"F:\Research\AMFEdge\Model\RF_Edge_SHAP_outMCWD.xlsx"
     mag_df = pd.read_excel(path, sheet_name='nirv_magnitude')
     mag_df = mag_df[mag_df['Feature']!= 'histMCWD_mean']
     scale_df = pd.read_excel(path, sheet_name='nirv_scale')
@@ -96,19 +96,19 @@ if __name__ == "__main__":
     yticks = dict(zip(
         ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
          'SCC_mean', 'sand_mean_mean', 'histMCWD_mean',
-        'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
+        'dMCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
          'vpd_mean', 'total_precipitation_sum_mean','temperature_2m_mean'], 
         ['HAND','$S_{\mathrm{RH98}}$', '$M_{\mathrm{RH98}}$',
-         'Soil Fertility', 'Soil Texture', 'Hist MCWD', 'MCWD',
+         'Soil Fertility', 'Soil Texture', 'Long-term MCWD', 'dMCWD',
         '$\Delta$PAR','$\Delta$VPD', '$\Delta P$', '$\Delta T$'
         ]))
 
     # Convert 'Group' to categorical with desired order
     order = ['Soil', 'Hydrology', 'Forest structure', 'Drought' ]
     mag_df['Group'] = pd.Categorical(mag_df['Group'], categories=order, ordered=True)
-    mag_df = mag_df.sort_values(by=['Group', 'Importance (ΔR²)'], axis=0, ascending=True)
+    mag_df = mag_df.sort_values(by=['Group', 'mean_abs_shap'], axis=0, ascending=True)
     scale_df['Group'] = pd.Categorical(scale_df['Group'], categories=order, ordered=True)
-    scale_df = scale_df.sort_values(by=['Group', 'Importance (ΔR²)'], axis=0, ascending=True)
+    scale_df = scale_df.sort_values(by=['Group', 'mean_abs_shap'], axis=0, ascending=True)
 
     # mag_df = mag_df.sort_values(by='Importance (ΔR²)', axis=0, ascending=True)
     # scale_df = scale_df.sort_values(by='Importance (ΔR²)', axis=0, ascending=True)
@@ -117,15 +117,15 @@ if __name__ == "__main__":
     dfs = [mag_df, scale_df]
 
     grid = (1, 2)
-    cols = [('Feature', 'Importance (ΔR²)', 'Importance std')] * 2
-    titles = ['$M_{\Delta \mathrm{NIRv}}$ ($R^2$=0.81)', '$S_{\Delta \mathrm{NIRv}}$ ($R^2$=0.68)']
+    cols = [('Feature', 'mean_abs_shap')] * 2
+    titles = ['$M_{\Delta \mathrm{NIRv}}$', '$S_{\Delta \mathrm{NIRv}}$']
 
     plot_setting = {
         'titles': titles,
-        'xlabels': [r'Importance for $M_{\Delta \mathrm{NIRv}}$ ($\Delta R^2$)', 
-                    r'Importance for $S_{\Delta \mathrm{NIRv}}$ ($\Delta R^2$)'],
+        'xlabels': [r'SHAP importance for $M_{\Delta \mathrm{NIRv}}$', 
+                    r'SHAP importance for $S_{\Delta \mathrm{NIRv}}$'],
         'ylabels': [None]*2,
     }
 
-    outpath = r"E:\Thesis\AMFEdge\Figures\Cause\nirv_RF_importance_bar.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\Cause\nirv_outMCWD_RF_importance_bar.pdf"
     main(dfs, grid, cols, plot_setting, outpath)

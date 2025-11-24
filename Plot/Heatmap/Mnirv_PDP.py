@@ -102,11 +102,11 @@ if __name__ == "__main__":
     xcols = ['HAND_mean', 'rh98_scale', 'rh98_magnitude', 
             'SCC_mean', 'sand_mean_mean', 'histMCWD_mean',
             'MCWD_mean', 'surface_solar_radiation_downwards_sum_mean',
-            'vpd_mean', 'gpm_total_precipitation_sum_mean', 'temperature_2m_mean',
+            'vpd_mean', 'total_precipitation_sum_mean', 'temperature_2m_mean',
             ]
     ycol = 'nirv_magnitude'
 
-    path = r"F:\Research\AMFEdge\Model\Amazon_GLEAM_Edge_Attribution.csv"
+    path = r"F:\Research\AMFEdge\Model\Amazon_undistEdge_Attribution.csv"
     raw_df = pd.read_csv(path)
     # raw_df = raw_df[raw_df['nirv_magnitude'] > 0]
     df = raw_df.dropna(subset=xcols+[ycol])
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         'xlabels': ['HAND (m)']*2,
         'ylabels': ['MCWD (mm)']*2,
         'xlims': [[0, 40], [3, 40]],
-        'ylims': [[0, 800], [0, 800]],
+        'ylims': [[0, 400], [0, 400]],
         'cmaps': cmaps,'norms': norms, 'levels': [levels]*2
     }
     outpath = r'E:\Thesis\AMFEdge\Figures\Cause\Mnirv_HAND&MCWD.pdf'

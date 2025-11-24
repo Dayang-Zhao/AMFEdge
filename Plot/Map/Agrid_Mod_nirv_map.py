@@ -80,12 +80,16 @@ if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
     years = [2005, 2010, 2015, 2023]
-    prefname = r"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_Edge_"
-    dfs = [pd.read_csv(prefname + str(year) + "_diff.csv") for year in years]
+    # prefname = r"F:\Research\AMFEdge\EdgeMod\anoVI_Amazon_Edge_"
+    # dfs = [pd.read_csv(prefname + str(year) + "_diff.csv") for year in years]
+    path = r"F:\Research\AMFEdge\Comparison\Mnirv_Predictions.csv"
+    df = pd.read_csv(path)
+    dfs = [df[df['year']==year] for year in years]
 
     # Merge data.
     gdfs_merged = [gdf.merge(df, on="Id", how="left") for df in dfs]
-    cols = ['dNIRv_10_40']*4
+    # cols = ['dNIRv_10_40']*4
+    cols = ['nirv_magnitude']*4
     grid = (2, 2)
 
     # Plot setting.
@@ -105,6 +109,6 @@ if __name__ == "__main__":
     extend = ['both']*4
     titles = ['2005', '2010', '2015', '2023']
 
-    outpath = r"E:\Thesis\AMFEdge\Figures\EdgeMod\NIRv_Mod_edge_map.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\EdgeMod\NIRv_Mod_pred_edge_map.pdf"
     plot_setting = {'cmaps': cmaps, 'norms': norms, 'titles': titles, 'extends': extend}
     main(dfs=gdfs_merged, grid=grid, cols=cols, plot_setting=plot_setting, outpath=outpath)

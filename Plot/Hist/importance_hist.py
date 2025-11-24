@@ -80,7 +80,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
         fig.savefig(outpath, dpi=600)
 
 if __name__ == "__main__":
-    path = r"F:\Research\AMFEdge\Model\RF_Edge_PFI_importance.xlsx"
+    path = r"F:\Research\AMFEdge\Model\RF_GLEAM_Edge_PFI_importance.xlsx"
     mag_df = pd.read_excel(path, sheet_name='nirv_magnitude')
     scale_df = pd.read_excel(path, sheet_name='nirv_scale')
     mag_df = mag_df.sort_values(by='Importance (ΔR²)', axis=0, ascending=True)

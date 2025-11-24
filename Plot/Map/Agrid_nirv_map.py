@@ -61,7 +61,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 
             # Add Shapefile overlay if provided
             shapefile = gpd.read_file(gv.AMAZON_PATH)
-            shapefile.plot(ax=ax, edgecolor='black', facecolor='none', linewidth=1, zorder=-1)
+            shapefile.plot(ax=ax, edgecolor='black', facecolor='none', linewidth=0.5, zorder=-1)
             
             # Add a basemap (world map)
             ax.add_feature(cfeature.COASTLINE, edgecolor='#919191', zorder=-1)
@@ -79,16 +79,15 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    csv_path = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_Effect_2023.csv"
-    # csv_path = r"F:\Research\AMFEdge\EdgeVI\VI_Amazon_UndistEdge_Effect_DrySeason.csv"
+    csv_path = r"F:\Research\AMFEdge\Edge\Undist\anoVI_Amazon_undistEdge_Effect_2023.csv"
     df = pd.read_csv(csv_path)
     df['nirv_scale'] = df['nirv_scale']/1000
-    df = df[df['nirv_scale'] > 6]
+    df = df[df['nirv_scale'] < 6]
     ne_df = df[df['Id'].isin(gv.NEGRID_IDS)]
     sw_df = df[df['Id'].isin(gv.SWGRID_IDS)]
                
-    # df = df[(df['nirv_scale_period']<=6000) & (df['nirv_scale_onset']<=6000)]
-    # df['nirv_scale_diff'] = df['nirv_scale_diff']/1000
+    # df = df[(df['evi_scale_period']<=6000) & (df['evi_scale_onset']<=6000)]
+    # df['evi_scale_diff'] = df['evi_scale_diff']/1000
 
     # Merge data.
     gdf_merged = gdf.merge(df, on="Id", how="left")
@@ -113,6 +112,6 @@ if __name__ == "__main__":
     extend = ['both', 'max']
     titles = [r'$M_{\Delta \mathrm{NIRv}}$ (%)', r'$S_{\Delta \mathrm{NIRv}}$ (km)']
 
-    outpath = r"E:\Thesis\AMFEdge\Figures\Edge\NIRv_edge_map.pdf"
+    outpath = r"E:\Thesis\AMFEdge\Figures\Edge\NIRv_undistEdge_map.pdf"
     plot_setting = {'cmaps': cmaps, 'norms': norms, 'titles': titles, 'extends': extend}
     main(dfs=dfs, grid=grid, cols=cols, plot_setting=plot_setting, outpath=outpath)

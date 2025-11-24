@@ -71,7 +71,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
             for spine in ax.spines.values():
                 spine.set_visible(False)
     # Adjust.
-    fig.subplots_adjust(bottom=0.01, top=0.92, left=0.01, right=0.98, hspace=0.1, wspace=0.05)
+    fig.subplots_adjust(bottom=0.01, top=0.95, left=0.01, right=0.98, hspace=0.1, wspace=0.05)
 
     if outpath is not None:
         fig.savefig(outpath, dpi=600)
@@ -79,14 +79,14 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    csv_path = r"F:\Research\AMFEdge\EdgeAge\sumEdge\anoVI_panAmazon_sumUndistEdge_2023_age.csv"
+    csv_path = r"F:\Research\AMFEdge\EdgeAge\sumEdge\anoVI_Amazon_sumUndistEdge_effect_2023_age.csv"
     df = pd.read_csv(csv_path)
-    df['fNIRv_mean'] = df['fNIRv_mean']*-1
+    df['dNIRv_mean'] = df['dNIRv_mean']*-1
     new_df = df.loc[df['age']==3]
-    old_df = df.loc[df['age']==13]
+    old_df = df.loc[df['age']==28]
     old_df2 = df.loc[df['age']==23]
     diff_df = pd.merge(new_df, old_df, on='Id', suffixes=('_new', '_old'))
-    diff_df['fnirv_mean_diff'] = diff_df['fNIRv_mean_new'] - diff_df['fNIRv_mean_old']
+    diff_df['d2NIRv_mean'] = diff_df['dNIRv_mean_new'] - diff_df['dNIRv_mean_old']
 
     # Merge data.
     new_gdf_merged = gdf.merge(new_df, on="Id", how="left")
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     old_gdf_merged2 = gdf.merge(old_df2, on="Id", how="left")
     diff_gdf_merged = gdf.merge(diff_df, on="Id", how="left")
     dfs = [new_gdf_merged, old_gdf_merged, diff_gdf_merged, old_gdf_merged2]
-    cols = ['fNIRv_mean', 'fNIRv_mean', 'fnirv_mean_diff', 'fNIRv_mean']
+    cols = ['dNIRv_mean', 'dNIRv_mean', 'd2NIRv_mean', 'dNIRv_mean']
     grid = (2, 2)
 
     # Plot setting.
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     cmaps = [cmap]*4
     norms = [norm1, norm1, norm2, norm1]
     extend = ['both']*4
-    titles = ['0-5 yr', '>10 yr', 'Difference (0-5 yr - >10 yr)', '>20 yr']
+    titles = ['New edge (0-5 yr)', 'Old edge (25-30 yr)', 'Difference (new - old)', '>20 yr']
 
     outpath = r"E:\Thesis\AMFEdge\Figures\EdgeAge\NIRv_age.pdf"
     plot_setting = {'cmaps': cmaps, 'norms': norms, 'titles': titles, 'extends': extend}

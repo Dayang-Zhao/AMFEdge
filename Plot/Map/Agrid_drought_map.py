@@ -76,17 +76,19 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
 if __name__ == "__main__":
     # Read data.
     gdf = gpd.read_file(gv.GRID_PATH)
-    path1 = r"F:\Research\AMFEdge\Edge\anoVI_Amazon_UndistEdge_2023.csv"
-    df1 = pd.read_csv(path1)
-    dst_df1 = df1.loc[df1['Dist']==-1]
-    path2 = r"F:\Research\AMFEdge\Meteo\Amazon_2023_droughtPeriod.csv"
-    df2 = pd.read_csv(path2)
+    # path1 = r"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_Edge_2023.csv"
+    # df1 = pd.read_csv(path1)
+    # dst_df1 = df1.loc[df1['Dist']==-1]
+    # path2 = r"F:\Research\AMFEdge\Meteo\Amazon_2023_droughtPeriod.csv"
+    # df2 = pd.read_csv(path2)
+    path3 = r"F:\Research\AMFEdge\Model\Amazon_Edge_Attribution.csv"
+    df3 = pd.read_csv(path3)
 
     # Merge data.
-    gdf_merged = gdf.merge(dst_df1, on="Id", how="left")
-    gdf_merged = gdf_merged.merge(df2[['Id', 'length_mean']], on="Id", how="left")
+    gdf_merged = gdf.merge(df3, on="Id", how="left")
+    # gdf_merged = gdf_merged.merge(df2[['Id', 'length_mean']], on="Id", how="left")
     dfs = [gdf_merged]*2
-    cols = ['MCWD_mean', 'length_mean']
+    cols = ['MCWD_mean', 'histMCWD_mean']
     grid = (1, 2)
 
     # Plot setting.
@@ -96,8 +98,8 @@ if __name__ == "__main__":
     cmap2 = sns.color_palette("YlOrBr", as_cmap=True)
     levels = np.arange(0, 7, 1)
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
-    cmaps = [cmap1, cmap2]
-    norms = [norm1, norm2]
+    cmaps = [cmap1, cmap1]
+    norms = [norm1, norm1]
     titles = ['$\Delta$MCWD (%)', 'DL (month)']
 
     outpath = r"E:\Thesis\AMFEdge\Figures\Description\drought_map.pdf"

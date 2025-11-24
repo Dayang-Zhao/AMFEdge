@@ -63,8 +63,8 @@ if __name__ == '__main__':
     import glob
 
     year = 2023
-    root_dir = r"F:\Research\AMFEdge\Edge\Main\metaData"
-    pre_fname = f"anoVI_Amazon_GLEAM_Edge_{year}_"
+    root_dir = r"F:\Research\AMFEdge\Edge1deg\metaData"
+    pre_fname = f"anoVI_Amazon_Edge_{year}_"
     paths = glob.glob(pre_fname+'*'+'.csv', root_dir=root_dir)
     os.chdir(root_dir)
     # info_colums = ['Id', 'system:index', 'Continent', 'GEZcode', 'Tot']
@@ -89,11 +89,10 @@ if __name__ == '__main__':
     # dist_columns = ['Dist'] + ['undistForest_'+x for x in stats] + ['deforestLand_'+x for x in stats]\
     #     + ['degradedForest_'+x for x in stats] + ['regrowthForest_'+x for x in stats]
     # dist_columns = ['Dist'] + ['rh50_'+x for x in stats] + ['rh98_'+x for x in stats]
-    # dist_columns = ['Dist'] + ['agb_'+x for x in stats]
     df2 = parse_dist_data(df=raw_df, dist_columns=dist_columns, 
                           info_columns=info_columns, other_columns=other_columns)
 
     # Export reshaped data.
-    outpath = rf"F:\Research\AMFEdge\Edge\Main\anoVI_Amazon_GLEAM_Edge_{year}.csv"
+    outpath = rf"F:\Research\AMFEdge\Edge1deg\anoVI_Amazon_Edge_{year}.csv"
     # outpath = r"F:\Research\AMFEdge\Edge_TreeCover\treeCover_Amazon_UndistEdge_2023.csv"
     df2.to_csv(outpath, index=False)

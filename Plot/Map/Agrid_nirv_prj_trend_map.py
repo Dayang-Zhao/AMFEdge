@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # Read data.
     scenarios = ['SSP1_26', 'SSP2_45', 'SSP5_85']
     gdf = gpd.read_file(gv.GRID_PATH)
-    trend_path = r"F:\Research\AMFEdge\CMIP6\Predict\QDM\Mnirv_Edge_trend.csv"
+    trend_path = r"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_trend_V2.csv"
     df = pd.read_csv(trend_path)
     df = df.dropna(subset=['slope'])
     df['slope'] = df['slope']*10
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     # norm1 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap1.N)
 
     cmap2 = sns.color_palette("RdBu_r", as_cmap=True)
-    levels = np.arange(-0.4, 0.41, 0.05)
+    levels = np.arange(-0.3, 0.31, 0.05)
     # levels = np.arange(-16, 17, 4)
     norm2 = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap2.N)
     cmaps = [cmap2]*3

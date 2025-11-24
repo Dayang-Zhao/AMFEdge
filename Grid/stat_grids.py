@@ -64,19 +64,9 @@ def stat_grids(ds:xr.Dataset, shp:gpd.GeoDataFrame, ids:list, crs:str='EPSG:4326
     return outdf
 
 if __name__ == '__main__':
-    year = 2023
-    paths = [rf"F:\Research\AMFEdge\Meteo\Meta\Amazon_GLEAM_{year}_anoMeteo.tif",
-             r"F:\Research\AMFEdge\Meteo\Meta\Amazon_GLEAM_histMCWD.tif",
-             r"F:\Research\AMFEdge\Meteo\Meta\Amazon_GLEAM_2023_droughtPeriod.tif"
-             ]
-    # nvar = ['Gleam_MCWD', 'Gleam_stdAnoMCWD', 'Gleam_absAnoMCWD']
-    ds_array = []
-    for i, path in enumerate(paths):
-        ds = cd.tif2ds(path)
-        # ds = ds.rename({list(ds.data_vars)[0]: nvar[i]})
-        ds_array.append(ds)
-    ds = xr.merge(ds_array)
-    ds = ds.rename({'MCWD':'histMCWD'})
+    path = r"F:\Research\AMFEdge\Meteo\Meta\Amazon_Hist_aveMCWD.tif"
+    # ds = xr.open_dataset(path)
+    ds = cd.tif2ds(path).drop_vars('spatial_ref')
     nvar = list(ds.data_vars)
 
     shp_path = r"F:\Research\AMFEdge\Shapefile\Amazon_Grid_Final_15deg.shp"
@@ -87,5 +77,5 @@ if __name__ == '__main__':
     outdf = stat_grids(ds, shp, ids)
 
     # Save the output dataframe to a CSV file.
-    outpath = rf"F:\Research\AMFEdge\Meteo\Amazon_GLEAM_Grids_{year}_Meteo_stat.csv"
-    sd.save_pd_as_csv(outdf, outpath, index=False, add_row_or_col='col')
+    outpath = r"F:\Research\AMFEdge\Meteo\Amazon_Grids_2023_histMCWD_stat.csv"
+    outdf.to_csv(outpath, index=False)

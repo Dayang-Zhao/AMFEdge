@@ -76,5 +76,5 @@ if __name__ == "__main__":
     years = np.arange(2015, 2100)
     outdf = main(model)
 
-    outpath = rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{SCENARIO}_V1.csv"
+    outpath = rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{SCENARIO}.csv"
     outdf.to_csv(outpath, index=False)

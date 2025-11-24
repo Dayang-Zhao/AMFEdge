@@ -24,6 +24,7 @@ mpl.rc('font', **font)
 CRS = ccrs.PlateCarree()
 # EXTENT = [-80, -44, -21, 10]
 EXTENT = [-81.5, -44, -22, 12.5]
+CSIGN_PREC = 0.8
 
 def cm2inch(value):
     return value/2.54
@@ -40,7 +41,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
         for j in range(ncols):
             ax = axes[j]
             df = dfs[i*ncols+j]
-            col = cols[i*ncols+j]
+            col, sign_col = cols[i*ncols+j]
 
             # Plot setting.
             title_num = title_nums[i*ncols+j]
@@ -55,7 +56,7 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
                 df.plot(ax=ax, column=col, cmap=cmap, edgecolor='#919191', 
                         norm=norm, linewidth=0.3, legend=True, 
                         legend_kwds={"shrink": 2.2, 'aspect':40, 'orientation':'horizontal', 
-                                     'location':'bottom', 'pad':0.05,'extend':extend, 'label':r' $M_{\Delta \mathrm{NIRv}}$ (%)'},
+                                     'location':'bottom', 'pad':0.05,'extend':extend, 'label':r' $M_{\Delta \mathrm{NIRv}}$ difference (%)'},
                         missing_kwds={'color': 'white'})
             else:
                 df.plot(ax=ax, column=col, cmap=cmap, edgecolor='#919191', 
@@ -64,6 +65,13 @@ def main(dfs:list, grid:tuple, cols:list, plot_setting:dict, outpath:str):
                                      'location':'bottom', 'pad':0.05,'extend':extend,
                                      'ticks':[], },
                         missing_kwds={'color': 'white'})
+                
+            # Add dots for grids with sign consistency above threshold
+            sig = df[df[sign_col]>=0.8].copy()
+            sig["x"] = sig.geometry.centroid.x
+            sig["y"] = sig.geometry.centroid.y
+
+            ax.scatter(sig["x"], sig["y"], s=2, c="grey", marker=".", transform=CRS, zorder=10, facecolors=None)
 
             # Plugins.
             ax.set_title(title_num+' '+title, loc='left', fontsize=LABEL_SIZE+1)
@@ -91,28 +99,15 @@ if __name__ == "__main__":
     gdf = gpd.read_file(gv.GRID_PATH)
     dfs = []
 
-    def cal_diff(df, dst_var):
-        df_start = df[df['year'].isin(range(2015, 2025))].groupby('Id')[dst_var].mean().reset_index()
-        df_end = df[df['year'].isin(range(2091, 2101))].groupby('Id')[dst_var].mean().reset_index()
-        df_merged = pd.merge(df_start, df_end, on='Id', suffixes=('_start', '_end'))
-        df_merged['d'+dst_var] = df_merged[dst_var+'_end'] - df_merged[dst_var+'_start']
-
-        return df_merged
-
+    path = r"F:\Research\AMFEdge\CMIP6\Predict\diff_2015@2090.csv"
+    df = pd.read_csv(path)
     for scenario in scenarios:
-        csv_path = rf"F:\Research\AMFEdge\CMIP6\Predict\Mnirv_Edge_pred_{scenario}.csv"
-        df = pd.read_csv(csv_path)
-        df = df[(df['year']>=2060) & (df['year']<=2063)]
-        df = df[df['model']=='mri_esm2_0']
-        df2 = df.drop(columns=['model'])
-        df2 = df2.groupby(['Id', 'year']).mean().reset_index()
-        # ave_df = cal_diff(df2, 'nirv_magnitude')
-        ave_df = df2.groupby(['Id']).mean().reset_index()
-        dfs.append(ave_df)
+        scenario_df = df[df['scenario']==scenario].copy().drop(columns=['scenario'])
+        dfs.append(scenario_df)
 
     # Merge data.
     gdfs_merged = [gdf.merge(ave_df, on="Id", how="left") for ave_df in dfs]
-    cols = ['nirv_magnitude',]*3
+    cols = [('nirv_magnitude_end', 'diff_sign_prec_nirv_magnitude'),]*3
     grid = (1, 3)
 
     # Plot setting.
